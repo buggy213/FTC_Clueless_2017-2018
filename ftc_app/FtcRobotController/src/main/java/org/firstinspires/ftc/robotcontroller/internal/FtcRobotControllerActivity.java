@@ -306,6 +306,10 @@ public class FtcRobotControllerActivity extends Activity
     logPackageVersions();
   }
 
+  private void loadOpenCV() {
+
+  }
+
   protected UpdateUI createUpdateUI() {
     Restarter restarter = new RobotRestarter();
     UpdateUI result = new UpdateUI(this, dimmer);

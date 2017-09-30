@@ -1,2 +1,4 @@
+include ':opencv-java'
+
 include ':FtcRobotController'
 include ':TeamCode'

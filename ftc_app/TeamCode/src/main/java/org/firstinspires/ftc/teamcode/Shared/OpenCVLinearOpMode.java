@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.Shared;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.TimestampedI2cData;
 import com.qualcomm.robotcore.util.RobotLog;
 import com.qualcomm.robotcore.util.ThreadPool;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeManagerImpl;
 import org.firstinspires.ftc.robotcore.internal.opmode.TelemetryInternal;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
@@ -15,7 +15,36 @@ import java.util.concurrent.TimeUnit;
 
 // A nearly verbatim copy of the actual LinearOpModeClass, just added OpenCV functionality.
 
-public abstract class OpenCVLinearOpMode extends OpMode {
+public abstract class OpenCVLinearOpMode extends OpenCVOpMode {
+
+    private boolean hasNewFrame = false;
+    private Mat rgba;
+    private Mat gray;
+
+    @Override
+    public final Mat frame(Mat rgba, Mat gray) {
+        if (!isStarted) return rgba;
+        this.rgba = super.frame(rgba, gray);
+        Imgproc.cvtColor(rgba, this.gray, Imgproc.COLOR_RGBA2GRAY);
+        hasNewFrame = true;
+        return rgba;
+    }
+
+    public final Mat getFrameRgba() {
+        return rgba;
+    }
+
+    public final Mat getFrameGray() {
+        return gray;
+    }
+
+    public boolean hasNewFrame() {
+        return hasNewFrame;
+    }
+
+    public void discardFrame() {
+        hasNewFrame = false;
+    }
 
     //------------------------------------------------------------------------------------------------
     // State
@@ -252,7 +281,8 @@ public abstract class OpenCVLinearOpMode extends OpMode {
      */
     @Override
     final public void stop() {
-
+        this.rgba.release();
+        this.gray.release();
         // make isStopRequested() return true (and opModeIsActive() return false)
         stopRequested = true;
 

@@ -36,6 +36,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
+
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -50,14 +52,17 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOp", group="Linear Opmode")
+@TeleOp(name="TeleOp", group="Linear Opmode")
 public class TelemetryOpmode extends LinearOpMode {
+    RobotHardware robot;
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
+
+        robot = RobotHardware.GetSingleton(hardwareMap);
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -67,6 +72,44 @@ public class TelemetryOpmode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+            float leftPower = 0;
+            float rightPower = 0;
+
+            float forwardLeftPower = 0;
+            float forwardRightPower = 0;
+            float backLeftPower = 0;
+            float backRightPower = 0;
+
+            if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
+
+            }
+            else if (gamepad1.left_stick_x == 0) {
+                // Moving forwards or backwards
+                leftPower = rightPower += gamepad1.left_stick_y;
+            }
+            else if (gamepad1.left_stick_y == 0) {
+                // Moving side to side
+                forwardLeftPower = gamepad1.left_stick_x;
+                backLeftPower = -gamepad1.left_stick_x;
+                forwardRightPower = -gamepad1.left_stick_x;
+                backRightPower = gamepad1.left_stick_x;
+            }
+            else {
+                // Moving diagonally
+                // TODO this later i'm lazy lel
+            }
+
+            float rot = -gamepad1.left_trigger + gamepad1.right_trigger;
+            leftPower -= rot;
+            rightPower += rot;
+
+            robot.forwardLeft.setPower((forwardLeftPower + leftPower)/2);
+            robot.backLeft.setPower((backLeftPower + leftPower)/2);
+
+            robot.forwardRight.setPower((forwardRightPower + rightPower)/2);
+            robot.backRight.setPower((backRightPower + rightPower)/2);
+
             idle();
         }
     }

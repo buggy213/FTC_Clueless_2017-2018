@@ -18,7 +18,6 @@ public class FeatureDetector {
     protected final long nativeObj;
     protected FeatureDetector(long addr) { nativeObj = addr; }
 
-    public long getNativeObjAddr() { return nativeObj; }
 
     private static final int
             GRIDDETECTOR = 1000,
@@ -78,34 +77,6 @@ public class FeatureDetector {
 
 
     //
-    // C++: static Ptr_javaFeatureDetector create(int detectorType)
-    //
-
-    //javadoc: javaFeatureDetector::create(detectorType)
-    public static FeatureDetector create(int detectorType)
-    {
-        
-        FeatureDetector retVal = new FeatureDetector(create_0(detectorType));
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  bool empty()
-    //
-
-    //javadoc: javaFeatureDetector::empty()
-    public  boolean empty()
-    {
-        
-        boolean retVal = empty_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  void detect(Mat image, vector_KeyPoint& keypoints, Mat mask = Mat())
     //
 
@@ -157,16 +128,30 @@ public class FeatureDetector {
 
 
     //
-    // C++:  void read(String fileName)
+    // C++:  bool empty()
     //
 
-    //javadoc: javaFeatureDetector::read(fileName)
-    public  void read(String fileName)
+    //javadoc: javaFeatureDetector::empty()
+    public  boolean empty()
     {
         
-        read_0(nativeObj, fileName);
+        boolean retVal = empty_0(nativeObj);
         
-        return;
+        return retVal;
+    }
+
+
+    //
+    // C++: static javaFeatureDetector* create(int detectorType)
+    //
+
+    //javadoc: javaFeatureDetector::create(detectorType)
+    public static FeatureDetector create(int detectorType)
+    {
+        
+        FeatureDetector retVal = new FeatureDetector(create_0(detectorType));
+        
+        return retVal;
     }
 
 
@@ -184,18 +169,26 @@ public class FeatureDetector {
     }
 
 
+    //
+    // C++:  void read(String fileName)
+    //
+
+    //javadoc: javaFeatureDetector::read(fileName)
+    public  void read(String fileName)
+    {
+        
+        read_0(nativeObj, fileName);
+        
+        return;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
     }
 
 
-
-    // C++: static Ptr_javaFeatureDetector create(int detectorType)
-    private static native long create_0(int detectorType);
-
-    // C++:  bool empty()
-    private static native boolean empty_0(long nativeObj);
 
     // C++:  void detect(Mat image, vector_KeyPoint& keypoints, Mat mask = Mat())
     private static native void detect_0(long nativeObj, long image_nativeObj, long keypoints_mat_nativeObj, long mask_nativeObj);
@@ -205,11 +198,17 @@ public class FeatureDetector {
     private static native void detect_2(long nativeObj, long images_mat_nativeObj, long keypoints_mat_nativeObj, long masks_mat_nativeObj);
     private static native void detect_3(long nativeObj, long images_mat_nativeObj, long keypoints_mat_nativeObj);
 
-    // C++:  void read(String fileName)
-    private static native void read_0(long nativeObj, String fileName);
+    // C++:  bool empty()
+    private static native boolean empty_0(long nativeObj);
+
+    // C++: static javaFeatureDetector* create(int detectorType)
+    private static native long create_0(int detectorType);
 
     // C++:  void write(String fileName)
     private static native void write_0(long nativeObj, String fileName);
+
+    // C++:  void read(String fileName)
+    private static native void read_0(long nativeObj, String fileName);
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

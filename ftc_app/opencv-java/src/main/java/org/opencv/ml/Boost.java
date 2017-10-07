@@ -4,7 +4,7 @@
 //
 package org.opencv.ml;
 
-import java.lang.String;
+
 
 // C++: class Boost
 //javadoc: Boost
@@ -21,57 +21,6 @@ public class Boost extends DTrees {
 
 
     //
-    // C++: static Ptr_Boost create()
-    //
-
-    //javadoc: Boost::create()
-    public static Boost create()
-    {
-        
-        Boost retVal = new Boost(create_0());
-        
-        return retVal;
-    }
-
-
-    //
-    // C++: static Ptr_Boost load(String filepath, String nodeName = String())
-    //
-
-    //javadoc: Boost::load(filepath, nodeName)
-    public static Boost load(String filepath, String nodeName)
-    {
-        
-        Boost retVal = new Boost(load_0(filepath, nodeName));
-        
-        return retVal;
-    }
-
-    //javadoc: Boost::load(filepath)
-    public static Boost load(String filepath)
-    {
-        
-        Boost retVal = new Boost(load_1(filepath));
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  double getWeightTrimRate()
-    //
-
-    //javadoc: Boost::getWeightTrimRate()
-    public  double getWeightTrimRate()
-    {
-        
-        double retVal = getWeightTrimRate_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  int getBoostType()
     //
 
@@ -80,20 +29,6 @@ public class Boost extends DTrees {
     {
         
         int retVal = getBoostType_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  int getWeakCount()
-    //
-
-    //javadoc: Boost::getWeakCount()
-    public  int getWeakCount()
-    {
-        
-        int retVal = getWeakCount_0(nativeObj);
         
         return retVal;
     }
@@ -114,6 +49,20 @@ public class Boost extends DTrees {
 
 
     //
+    // C++:  int getWeakCount()
+    //
+
+    //javadoc: Boost::getWeakCount()
+    public  int getWeakCount()
+    {
+        
+        int retVal = getWeakCount_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  void setWeakCount(int val)
     //
 
@@ -124,6 +73,20 @@ public class Boost extends DTrees {
         setWeakCount_0(nativeObj, val);
         
         return;
+    }
+
+
+    //
+    // C++:  double getWeightTrimRate()
+    //
+
+    //javadoc: Boost::getWeightTrimRate()
+    public  double getWeightTrimRate()
+    {
+        
+        double retVal = getWeightTrimRate_0(nativeObj);
+        
+        return retVal;
     }
 
 
@@ -141,6 +104,20 @@ public class Boost extends DTrees {
     }
 
 
+    //
+    // C++: static Ptr_Boost create()
+    //
+
+    //javadoc: Boost::create()
+    public static Boost create()
+    {
+        
+        Boost retVal = new Boost(create_0());
+        
+        return retVal;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
@@ -148,30 +125,26 @@ public class Boost extends DTrees {
 
 
 
-    // C++: static Ptr_Boost create()
-    private static native long create_0();
-
-    // C++: static Ptr_Boost load(String filepath, String nodeName = String())
-    private static native long load_0(String filepath, String nodeName);
-    private static native long load_1(String filepath);
-
-    // C++:  double getWeightTrimRate()
-    private static native double getWeightTrimRate_0(long nativeObj);
-
     // C++:  int getBoostType()
     private static native int getBoostType_0(long nativeObj);
-
-    // C++:  int getWeakCount()
-    private static native int getWeakCount_0(long nativeObj);
 
     // C++:  void setBoostType(int val)
     private static native void setBoostType_0(long nativeObj, int val);
 
+    // C++:  int getWeakCount()
+    private static native int getWeakCount_0(long nativeObj);
+
     // C++:  void setWeakCount(int val)
     private static native void setWeakCount_0(long nativeObj, int val);
 
+    // C++:  double getWeightTrimRate()
+    private static native double getWeightTrimRate_0(long nativeObj);
+
     // C++:  void setWeightTrimRate(double val)
     private static native void setWeightTrimRate_0(long nativeObj, double val);
+
+    // C++: static Ptr_Boost create()
+    private static native long create_0();
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

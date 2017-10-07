@@ -14,17 +14,16 @@ public class VideoCapture {
     protected final long nativeObj;
     protected VideoCapture(long addr) { nativeObj = addr; }
 
-    public long getNativeObjAddr() { return nativeObj; }
 
     //
-    // C++:   VideoCapture(String filename, int apiPreference)
+    // C++:   VideoCapture()
     //
 
-    //javadoc: VideoCapture::VideoCapture(filename, apiPreference)
-    public   VideoCapture(String filename, int apiPreference)
+    //javadoc: VideoCapture::VideoCapture()
+    public   VideoCapture()
     {
         
-        nativeObj = VideoCapture_0(filename, apiPreference);
+        nativeObj = VideoCapture_0();
         
         return;
     }
@@ -45,42 +44,42 @@ public class VideoCapture {
 
 
     //
-    // C++:   VideoCapture(int index)
+    // C++:   VideoCapture(int device)
     //
 
-    //javadoc: VideoCapture::VideoCapture(index)
-    public   VideoCapture(int index)
+    //javadoc: VideoCapture::VideoCapture(device)
+    public   VideoCapture(int device)
     {
         
-        nativeObj = VideoCapture_2(index);
+        nativeObj = VideoCapture_2(device);
         
         return;
     }
 
 
     //
-    // C++:   VideoCapture()
+    // C++:  bool open(String filename)
     //
 
-    //javadoc: VideoCapture::VideoCapture()
-    public   VideoCapture()
+    //javadoc: VideoCapture::open(filename)
+    public  boolean open(String filename)
     {
         
-        nativeObj = VideoCapture_3();
+        boolean retVal = open_0(nativeObj, filename);
         
-        return;
+        return retVal;
     }
 
 
     //
-    // C++:  bool grab()
+    // C++:  bool open(int device)
     //
 
-    //javadoc: VideoCapture::grab()
-    public  boolean grab()
+    //javadoc: VideoCapture::open(device)
+    public  boolean open(int device)
     {
         
-        boolean retVal = grab_0(nativeObj);
+        boolean retVal = open_1(nativeObj, device);
         
         return retVal;
     }
@@ -101,56 +100,28 @@ public class VideoCapture {
 
 
     //
-    // C++:  bool open(String filename, int apiPreference)
+    // C++:  void release()
     //
 
-    //javadoc: VideoCapture::open(filename, apiPreference)
-    public  boolean open(String filename, int apiPreference)
+    //javadoc: VideoCapture::release()
+    public  void release()
     {
         
-        boolean retVal = open_0(nativeObj, filename, apiPreference);
+        release_0(nativeObj);
         
-        return retVal;
+        return;
     }
 
 
     //
-    // C++:  bool open(String filename)
+    // C++:  bool grab()
     //
 
-    //javadoc: VideoCapture::open(filename)
-    public  boolean open(String filename)
+    //javadoc: VideoCapture::grab()
+    public  boolean grab()
     {
         
-        boolean retVal = open_1(nativeObj, filename);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  bool open(int cameraNum, int apiPreference)
-    //
-
-    //javadoc: VideoCapture::open(cameraNum, apiPreference)
-    public  boolean open(int cameraNum, int apiPreference)
-    {
-        
-        boolean retVal = open_2(nativeObj, cameraNum, apiPreference);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  bool open(int index)
-    //
-
-    //javadoc: VideoCapture::open(index)
-    public  boolean open(int index)
-    {
-        
-        boolean retVal = open_3(nativeObj, index);
+        boolean retVal = grab_0(nativeObj);
         
         return retVal;
     }
@@ -194,20 +165,6 @@ public class VideoCapture {
 
 
     //
-    // C++:  bool set(int propId, double value)
-    //
-
-    //javadoc: VideoCapture::set(propId, value)
-    public  boolean set(int propId, double value)
-    {
-        
-        boolean retVal = set_0(nativeObj, propId, value);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  double get(int propId)
     //
 
@@ -222,16 +179,16 @@ public class VideoCapture {
 
 
     //
-    // C++:  void release()
+    // C++:  bool set(int propId, double value)
     //
 
-    //javadoc: VideoCapture::release()
-    public  void release()
+    //javadoc: VideoCapture::set(propId, value)
+    public  boolean set(int propId, double value)
     {
         
-        release_0(nativeObj);
+        boolean retVal = set_0(nativeObj, propId, value);
         
-        return;
+        return retVal;
     }
 
 
@@ -242,35 +199,29 @@ public class VideoCapture {
 
 
 
-    // C++:   VideoCapture(String filename, int apiPreference)
-    private static native long VideoCapture_0(String filename, int apiPreference);
+    // C++:   VideoCapture()
+    private static native long VideoCapture_0();
 
     // C++:   VideoCapture(String filename)
     private static native long VideoCapture_1(String filename);
 
-    // C++:   VideoCapture(int index)
-    private static native long VideoCapture_2(int index);
+    // C++:   VideoCapture(int device)
+    private static native long VideoCapture_2(int device);
 
-    // C++:   VideoCapture()
-    private static native long VideoCapture_3();
+    // C++:  bool open(String filename)
+    private static native boolean open_0(long nativeObj, String filename);
 
-    // C++:  bool grab()
-    private static native boolean grab_0(long nativeObj);
+    // C++:  bool open(int device)
+    private static native boolean open_1(long nativeObj, int device);
 
     // C++:  bool isOpened()
     private static native boolean isOpened_0(long nativeObj);
 
-    // C++:  bool open(String filename, int apiPreference)
-    private static native boolean open_0(long nativeObj, String filename, int apiPreference);
+    // C++:  void release()
+    private static native void release_0(long nativeObj);
 
-    // C++:  bool open(String filename)
-    private static native boolean open_1(long nativeObj, String filename);
-
-    // C++:  bool open(int cameraNum, int apiPreference)
-    private static native boolean open_2(long nativeObj, int cameraNum, int apiPreference);
-
-    // C++:  bool open(int index)
-    private static native boolean open_3(long nativeObj, int index);
+    // C++:  bool grab()
+    private static native boolean grab_0(long nativeObj);
 
     // C++:  bool read(Mat& image)
     private static native boolean read_0(long nativeObj, long image_nativeObj);
@@ -279,14 +230,11 @@ public class VideoCapture {
     private static native boolean retrieve_0(long nativeObj, long image_nativeObj, int flag);
     private static native boolean retrieve_1(long nativeObj, long image_nativeObj);
 
-    // C++:  bool set(int propId, double value)
-    private static native boolean set_0(long nativeObj, int propId, double value);
-
     // C++:  double get(int propId)
     private static native double get_0(long nativeObj, int propId);
 
-    // C++:  void release()
-    private static native void release_0(long nativeObj);
+    // C++:  bool set(int propId, double value)
+    private static native boolean set_0(long nativeObj, int propId, double value);
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

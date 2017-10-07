@@ -6,13 +6,11 @@ package org.opencv.objdetect;
 
 import java.lang.String;
 import java.util.ArrayList;
-import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Size;
-import org.opencv.utils.Converters;
 
 // C++: class CascadeClassifier
 //javadoc: CascadeClassifier
@@ -20,21 +18,6 @@ public class CascadeClassifier {
 
     protected final long nativeObj;
     protected CascadeClassifier(long addr) { nativeObj = addr; }
-
-    public long getNativeObjAddr() { return nativeObj; }
-
-    //
-    // C++:   CascadeClassifier(String filename)
-    //
-
-    //javadoc: CascadeClassifier::CascadeClassifier(filename)
-    public   CascadeClassifier(String filename)
-    {
-        
-        nativeObj = CascadeClassifier_0(filename);
-        
-        return;
-    }
 
 
     //
@@ -45,35 +28,35 @@ public class CascadeClassifier {
     public   CascadeClassifier()
     {
         
-        nativeObj = CascadeClassifier_1();
+        nativeObj = CascadeClassifier_0();
         
         return;
     }
 
 
     //
-    // C++:  Size getOriginalWindowSize()
+    // C++:   CascadeClassifier(String filename)
     //
 
-    //javadoc: CascadeClassifier::getOriginalWindowSize()
-    public  Size getOriginalWindowSize()
+    //javadoc: CascadeClassifier::CascadeClassifier(filename)
+    public   CascadeClassifier(String filename)
     {
         
-        Size retVal = new Size(getOriginalWindowSize_0(nativeObj));
+        nativeObj = CascadeClassifier_1(filename);
         
-        return retVal;
+        return;
     }
 
 
     //
-    // C++: static bool convert(String oldcascade, String newcascade)
+    // C++:  bool load(String filename)
     //
 
-    //javadoc: CascadeClassifier::convert(oldcascade, newcascade)
-    public static boolean convert(String oldcascade, String newcascade)
+    //javadoc: CascadeClassifier::load(filename)
+    public  boolean load(String filename)
     {
         
-        boolean retVal = convert_0(oldcascade, newcascade);
+        boolean retVal = load_0(nativeObj, filename);
         
         return retVal;
     }
@@ -94,52 +77,10 @@ public class CascadeClassifier {
 
 
     //
-    // C++:  bool isOldFormatCascade()
-    //
-
-    //javadoc: CascadeClassifier::isOldFormatCascade()
-    public  boolean isOldFormatCascade()
-    {
-        
-        boolean retVal = isOldFormatCascade_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  bool load(String filename)
-    //
-
-    //javadoc: CascadeClassifier::load(filename)
-    public  boolean load(String filename)
-    {
-        
-        boolean retVal = load_0(nativeObj, filename);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  bool read(FileNode node)
     //
 
     // Unknown type 'FileNode' (I), skipping the function
-
-
-    //
-    // C++:  int getFeatureType()
-    //
-
-    //javadoc: CascadeClassifier::getFeatureType()
-    public  int getFeatureType()
-    {
-        
-        int retVal = getFeatureType_0(nativeObj);
-        
-        return retVal;
-    }
 
 
     //
@@ -217,6 +158,62 @@ public class CascadeClassifier {
     }
 
 
+    //
+    // C++:  bool isOldFormatCascade()
+    //
+
+    //javadoc: CascadeClassifier::isOldFormatCascade()
+    public  boolean isOldFormatCascade()
+    {
+        
+        boolean retVal = isOldFormatCascade_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  Size getOriginalWindowSize()
+    //
+
+    //javadoc: CascadeClassifier::getOriginalWindowSize()
+    public  Size getOriginalWindowSize()
+    {
+        
+        Size retVal = new Size(getOriginalWindowSize_0(nativeObj));
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  int getFeatureType()
+    //
+
+    //javadoc: CascadeClassifier::getFeatureType()
+    public  int getFeatureType()
+    {
+        
+        int retVal = getFeatureType_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++: static bool convert(String oldcascade, String newcascade)
+    //
+
+    //javadoc: CascadeClassifier::convert(oldcascade, newcascade)
+    public static boolean convert(String oldcascade, String newcascade)
+    {
+        
+        boolean retVal = convert_0(oldcascade, newcascade);
+        
+        return retVal;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
@@ -224,29 +221,17 @@ public class CascadeClassifier {
 
 
 
-    // C++:   CascadeClassifier(String filename)
-    private static native long CascadeClassifier_0(String filename);
-
     // C++:   CascadeClassifier()
-    private static native long CascadeClassifier_1();
+    private static native long CascadeClassifier_0();
 
-    // C++:  Size getOriginalWindowSize()
-    private static native double[] getOriginalWindowSize_0(long nativeObj);
-
-    // C++: static bool convert(String oldcascade, String newcascade)
-    private static native boolean convert_0(String oldcascade, String newcascade);
-
-    // C++:  bool empty()
-    private static native boolean empty_0(long nativeObj);
-
-    // C++:  bool isOldFormatCascade()
-    private static native boolean isOldFormatCascade_0(long nativeObj);
+    // C++:   CascadeClassifier(String filename)
+    private static native long CascadeClassifier_1(String filename);
 
     // C++:  bool load(String filename)
     private static native boolean load_0(long nativeObj, String filename);
 
-    // C++:  int getFeatureType()
-    private static native int getFeatureType_0(long nativeObj);
+    // C++:  bool empty()
+    private static native boolean empty_0(long nativeObj);
 
     // C++:  void detectMultiScale(Mat image, vector_Rect& objects, double scaleFactor = 1.1, int minNeighbors = 3, int flags = 0, Size minSize = Size(), Size maxSize = Size())
     private static native void detectMultiScale_0(long nativeObj, long image_nativeObj, long objects_mat_nativeObj, double scaleFactor, int minNeighbors, int flags, double minSize_width, double minSize_height, double maxSize_width, double maxSize_height);
@@ -259,6 +244,18 @@ public class CascadeClassifier {
     // C++:  void detectMultiScale(Mat image, vector_Rect& objects, vector_int& rejectLevels, vector_double& levelWeights, double scaleFactor = 1.1, int minNeighbors = 3, int flags = 0, Size minSize = Size(), Size maxSize = Size(), bool outputRejectLevels = false)
     private static native void detectMultiScale3_0(long nativeObj, long image_nativeObj, long objects_mat_nativeObj, long rejectLevels_mat_nativeObj, long levelWeights_mat_nativeObj, double scaleFactor, int minNeighbors, int flags, double minSize_width, double minSize_height, double maxSize_width, double maxSize_height, boolean outputRejectLevels);
     private static native void detectMultiScale3_1(long nativeObj, long image_nativeObj, long objects_mat_nativeObj, long rejectLevels_mat_nativeObj, long levelWeights_mat_nativeObj);
+
+    // C++:  bool isOldFormatCascade()
+    private static native boolean isOldFormatCascade_0(long nativeObj);
+
+    // C++:  Size getOriginalWindowSize()
+    private static native double[] getOriginalWindowSize_0(long nativeObj);
+
+    // C++:  int getFeatureType()
+    private static native int getFeatureType_0(long nativeObj);
+
+    // C++: static bool convert(String oldcascade, String newcascade)
+    private static native boolean convert_0(String oldcascade, String newcascade);
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

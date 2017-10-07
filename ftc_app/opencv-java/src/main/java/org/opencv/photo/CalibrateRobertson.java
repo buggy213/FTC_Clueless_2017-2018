@@ -14,34 +14,6 @@ public class CalibrateRobertson extends CalibrateCRF {
 
 
     //
-    // C++:  Mat getRadiance()
-    //
-
-    //javadoc: CalibrateRobertson::getRadiance()
-    public  Mat getRadiance()
-    {
-        
-        Mat retVal = new Mat(getRadiance_0(nativeObj));
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  float getThreshold()
-    //
-
-    //javadoc: CalibrateRobertson::getThreshold()
-    public  float getThreshold()
-    {
-        
-        float retVal = getThreshold_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  int getMaxIter()
     //
 
@@ -70,6 +42,20 @@ public class CalibrateRobertson extends CalibrateCRF {
 
 
     //
+    // C++:  float getThreshold()
+    //
+
+    //javadoc: CalibrateRobertson::getThreshold()
+    public  float getThreshold()
+    {
+        
+        float retVal = getThreshold_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  void setThreshold(float threshold)
     //
 
@@ -83,6 +69,20 @@ public class CalibrateRobertson extends CalibrateCRF {
     }
 
 
+    //
+    // C++:  Mat getRadiance()
+    //
+
+    //javadoc: CalibrateRobertson::getRadiance()
+    public  Mat getRadiance()
+    {
+        
+        Mat retVal = new Mat(getRadiance_0(nativeObj));
+        
+        return retVal;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
@@ -90,20 +90,20 @@ public class CalibrateRobertson extends CalibrateCRF {
 
 
 
-    // C++:  Mat getRadiance()
-    private static native long getRadiance_0(long nativeObj);
-
-    // C++:  float getThreshold()
-    private static native float getThreshold_0(long nativeObj);
-
     // C++:  int getMaxIter()
     private static native int getMaxIter_0(long nativeObj);
 
     // C++:  void setMaxIter(int max_iter)
     private static native void setMaxIter_0(long nativeObj, int max_iter);
 
+    // C++:  float getThreshold()
+    private static native float getThreshold_0(long nativeObj);
+
     // C++:  void setThreshold(float threshold)
     private static native void setThreshold_0(long nativeObj, float threshold);
+
+    // C++:  Mat getRadiance()
+    private static native long getRadiance_0(long nativeObj);
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

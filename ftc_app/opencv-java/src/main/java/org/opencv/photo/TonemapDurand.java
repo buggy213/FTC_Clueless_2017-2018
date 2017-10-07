@@ -14,20 +14,6 @@ public class TonemapDurand extends Tonemap {
 
 
     //
-    // C++:  float getContrast()
-    //
-
-    //javadoc: TonemapDurand::getContrast()
-    public  float getContrast()
-    {
-        
-        float retVal = getContrast_0(nativeObj);
-        
-        return retVal;
-    }
-
-
-    //
     // C++:  float getSaturation()
     //
 
@@ -42,28 +28,28 @@ public class TonemapDurand extends Tonemap {
 
 
     //
-    // C++:  float getSigmaColor()
+    // C++:  void setSaturation(float saturation)
     //
 
-    //javadoc: TonemapDurand::getSigmaColor()
-    public  float getSigmaColor()
+    //javadoc: TonemapDurand::setSaturation(saturation)
+    public  void setSaturation(float saturation)
     {
         
-        float retVal = getSigmaColor_0(nativeObj);
+        setSaturation_0(nativeObj, saturation);
         
-        return retVal;
+        return;
     }
 
 
     //
-    // C++:  float getSigmaSpace()
+    // C++:  float getContrast()
     //
 
-    //javadoc: TonemapDurand::getSigmaSpace()
-    public  float getSigmaSpace()
+    //javadoc: TonemapDurand::getContrast()
+    public  float getContrast()
     {
         
-        float retVal = getSigmaSpace_0(nativeObj);
+        float retVal = getContrast_0(nativeObj);
         
         return retVal;
     }
@@ -84,30 +70,16 @@ public class TonemapDurand extends Tonemap {
 
 
     //
-    // C++:  void setSaturation(float saturation)
+    // C++:  float getSigmaSpace()
     //
 
-    //javadoc: TonemapDurand::setSaturation(saturation)
-    public  void setSaturation(float saturation)
+    //javadoc: TonemapDurand::getSigmaSpace()
+    public  float getSigmaSpace()
     {
         
-        setSaturation_0(nativeObj, saturation);
+        float retVal = getSigmaSpace_0(nativeObj);
         
-        return;
-    }
-
-
-    //
-    // C++:  void setSigmaColor(float sigma_color)
-    //
-
-    //javadoc: TonemapDurand::setSigmaColor(sigma_color)
-    public  void setSigmaColor(float sigma_color)
-    {
-        
-        setSigmaColor_0(nativeObj, sigma_color);
-        
-        return;
+        return retVal;
     }
 
 
@@ -125,6 +97,34 @@ public class TonemapDurand extends Tonemap {
     }
 
 
+    //
+    // C++:  float getSigmaColor()
+    //
+
+    //javadoc: TonemapDurand::getSigmaColor()
+    public  float getSigmaColor()
+    {
+        
+        float retVal = getSigmaColor_0(nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  void setSigmaColor(float sigma_color)
+    //
+
+    //javadoc: TonemapDurand::setSigmaColor(sigma_color)
+    public  void setSigmaColor(float sigma_color)
+    {
+        
+        setSigmaColor_0(nativeObj, sigma_color);
+        
+        return;
+    }
+
+
     @Override
     protected void finalize() throws Throwable {
         delete(nativeObj);
@@ -132,29 +132,29 @@ public class TonemapDurand extends Tonemap {
 
 
 
-    // C++:  float getContrast()
-    private static native float getContrast_0(long nativeObj);
-
     // C++:  float getSaturation()
     private static native float getSaturation_0(long nativeObj);
-
-    // C++:  float getSigmaColor()
-    private static native float getSigmaColor_0(long nativeObj);
-
-    // C++:  float getSigmaSpace()
-    private static native float getSigmaSpace_0(long nativeObj);
-
-    // C++:  void setContrast(float contrast)
-    private static native void setContrast_0(long nativeObj, float contrast);
 
     // C++:  void setSaturation(float saturation)
     private static native void setSaturation_0(long nativeObj, float saturation);
 
-    // C++:  void setSigmaColor(float sigma_color)
-    private static native void setSigmaColor_0(long nativeObj, float sigma_color);
+    // C++:  float getContrast()
+    private static native float getContrast_0(long nativeObj);
+
+    // C++:  void setContrast(float contrast)
+    private static native void setContrast_0(long nativeObj, float contrast);
+
+    // C++:  float getSigmaSpace()
+    private static native float getSigmaSpace_0(long nativeObj);
 
     // C++:  void setSigmaSpace(float sigma_space)
     private static native void setSigmaSpace_0(long nativeObj, float sigma_space);
+
+    // C++:  float getSigmaColor()
+    private static native float getSigmaColor_0(long nativeObj);
+
+    // C++:  void setSigmaColor(float sigma_color)
+    private static native void setSigmaColor_0(long nativeObj, float sigma_color);
 
     // native support for java finalize()
     private static native void delete(long nativeObj);

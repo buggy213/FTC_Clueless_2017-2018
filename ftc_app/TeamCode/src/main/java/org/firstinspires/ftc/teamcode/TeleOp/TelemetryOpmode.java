@@ -59,6 +59,12 @@ public class TelemetryOpmode extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
+    final double speedMultiplier = 0.75;
+    final double rotSpeed = 0.5;
+
+    // final double deadZoneX = 0.5;
+    // final double deadZoneY = 0.5;
+
     @Override
     public void runOpMode() {
 
@@ -73,6 +79,7 @@ public class TelemetryOpmode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            /* Control Mode 1 - Not working
             float leftPower = 0;
             float rightPower = 0;
 
@@ -109,8 +116,80 @@ public class TelemetryOpmode extends LinearOpMode {
 
             robot.forwardRight.setPower((forwardRightPower + rightPower)/2);
             robot.backRight.setPower((backRightPower + rightPower)/2);
+            */
+            // boolean left = between(-deadZoneX, deadZoneX, gamepad1.left_stick_x);
+            // boolean right = between(-deadZoneX, deadZoneX, gamepad1.right_stick_x);
+
+            double vRot = rotSpeed * (-gamepad1.left_trigger + gamepad1.right_trigger);
+
+            double speed = (gamepad1.left_stick_x + gamepad1.right_stick_y) / 2;
+            speed = Math.abs(speed * speedMultiplier);
+
+            double desiredAngle = Math.atan2(gamepad1.right_stick_y, gamepad1.left_stick_x) ;
+            if (desiredAngle < 0) {
+                desiredAngle = desiredAngle + 2 * 3.14;
+            }
+
+            telemetry.addData("Desired degrees (CCW)", desiredAngle * 180 / 3.14);
+
+            double intermediateSin = Math.sin(desiredAngle + 0.79);
+            double intermediateCos = Math.cos(desiredAngle + 0.79);
+
+            double leftForward = speed * (intermediateSin) + vRot;
+            double leftBackward = speed * (intermediateCos) + vRot;
+            double rightForward = speed * (intermediateCos) - vRot;
+            double rightBackward = speed * (intermediateSin) - vRot;
+
+            /*if (left && right) {
+                // Both forward / backward
+                leftForward = gamepad1.left_stick_y;
+                leftBackward = gamepad1.left_stick_y;
+
+                rightForward = gamepad1.right_stick_y;
+                rightBackward = gamepad1.right_stick_y;
+            }
+            else if (left || right) {
+                // One side, one forward
+                // Moving diagonally
+                if (left) {
+                    // left is forward and backward
+                    // right is left and right
+
+                }
+                else {
+                    // right is forward and backward
+                    // left is left and right
+                }
+            }
+            else {
+                double power = (gamepad1.left_stick_x + gamepad1.right_stick_x) / 2;
+                leftForward = power;
+                rightBackward = power;
+                rightForward = -power;
+                leftBackward = -power;
+            }*/
+
+            robot.forwardLeft.setPower(leftForward);
+            robot.forwardRight.setPower(rightForward);
+            robot.backLeft.setPower(leftBackward);
+            robot.backRight.setPower(rightBackward);
+
+            telemetry.addData("Left stick x and y", gamepad1.left_stick_x + ", " + gamepad1.left_stick_y);
+            telemetry.addData("Right stick x and y", gamepad1.right_stick_x + ", " + gamepad1.right_stick_y);
+
+            telemetry.addData("Left forward power", leftForward);
+            telemetry.addData("Left backward power", leftBackward);
+            telemetry.addData("Right forward power", rightForward);
+            telemetry.addData("Right backward power", rightBackward);
+
+
+            telemetry.update();
 
             idle();
         }
+    }
+
+    public boolean between(double lower, double upper, double value) {
+        return (value < upper && value > lower);
     }
 }

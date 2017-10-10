@@ -122,7 +122,7 @@ public class TelemetryOpmode extends LinearOpMode {
 
             double vRot = rotSpeed * (-gamepad1.left_trigger + gamepad1.right_trigger);
 
-            double speed = (gamepad1.left_stick_x + gamepad1.right_stick_y) / 2;
+            double speed = greater(Math.abs(gamepad1.right_stick_y), Math.abs(gamepad1.left_stick_x));
             speed = Math.abs(speed * speedMultiplier);
 
             double desiredAngle = Math.atan2(gamepad1.right_stick_y, gamepad1.left_stick_x) ;
@@ -191,5 +191,9 @@ public class TelemetryOpmode extends LinearOpMode {
 
     public boolean between(double lower, double upper, double value) {
         return (value < upper && value > lower);
+    }
+
+    double greater(double a, double b) {
+        return (a > b) ? a : b;
     }
 }

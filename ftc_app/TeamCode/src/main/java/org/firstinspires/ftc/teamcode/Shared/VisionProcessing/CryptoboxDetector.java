@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Shared.VisionProcessing;
 
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 /**
  * Created by Joshua on 9/25/2017.

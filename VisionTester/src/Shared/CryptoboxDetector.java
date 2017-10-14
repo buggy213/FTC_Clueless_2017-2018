@@ -8,6 +8,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -19,10 +20,11 @@ public class CryptoboxDetector {
     static Cryptobox cryptobox;
 
     final static int minLineLength = 50;
-    final static double minArea = 500;
 
-    // kek
-    final static double maxArea = 9001;
+    final static double minArea = 500;
+    final static double maxArea = 4001;
+
+    final static double maxGap = 35;
 
     static Scalar lowerRed = new Scalar(150, 0, 0);
     static Scalar upperRed = new Scalar(255, 120, 120);
@@ -129,9 +131,46 @@ public class CryptoboxDetector {
 
         for (Contour c : contours) {
             Drawing.drawContour(debugImage, c, Color.create(new Scalar(0,255,0), ColorSpace.RGB));
-
         }
 
+        // Sort contours by how far right they are
+        contours.sort(((o1, o2) -> {return (int)(o1.center().x - o2.center().x);}));
+
+        List<List<Contour>> contourGroups = new ArrayList<>();
+
+        for (int i = 0; i < contours.size(); i++) {
+            if (i == contours.size() - 1) {
+                break;
+            }
+
+            if (Math.abs(contours.get(i).center().x - contours.get(i + 1).center().x) < maxGap) {
+                // Part of the same group
+                if (contourGroups.size() == 0) {
+                    // First group
+                    contourGroups.add(new ArrayList<>());
+                    contourGroups.get(0).add(contours.get(i));
+                    contourGroups.get(0).add(contours.get(i + 1));
+                }
+
+                else {
+                    contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+                }
+            }
+            else {
+                // New group
+                contourGroups.add(new ArrayList<>());
+                contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+            }
+        }
+
+        int index = 0;
+        for (List<Contour> contourGroup : contourGroups) {
+            System.out.println("Contour group: " + index);
+
+            for (Contour c : contourGroup) {
+                System.out.println(c.center().x);
+            }
+        }
         // At this point we should only have contours representing the walls of the cryptobox
 
 

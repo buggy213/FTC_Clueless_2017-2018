@@ -1,6 +1,8 @@
-package org.firstinspires.ftc.teamcode.Shared.VisionProcessing;
+package Shared.vision;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 
 /**
  * Created by Joshua on 10/10/2017.
@@ -20,9 +22,14 @@ public class Line {
     }
 
     public boolean vertical(double maxDifferenceDegrees) {
-        double rotatedAngle = Math.atan2((b.x - a.x), (b.y - a.y));
+        double deltaX = b.x - a.x;
+        double deltaY = b.y - a.y;
+        double angle;
+
+        angle = Math.abs(Math.atan(deltaY / deltaX));
+
         double maxDifferenceRadians = (maxDifferenceDegrees / 180) * Math.PI;
-        return within(-maxDifferenceRadians, maxDifferenceRadians, rotatedAngle);
+        return Double.isNaN(angle) || angle > ((Math.PI / 2) - maxDifferenceRadians);
     }
 
     double normalize(double angle) {
@@ -31,6 +38,10 @@ public class Line {
             normalizedAngle += Math.PI * 2;
         }
         return normalizedAngle;
+    }
+
+    public void draw(Mat rgba, Scalar color, int thickness) {
+        Drawing.drawLine(rgba, a, b, Color.create(color, ColorSpace.RGBA), thickness);
     }
 
     public double length() {

@@ -56,15 +56,27 @@ public class CryptoboxDetector {
 
             lineArrayList.add(new Line(start, end));
 
-            Drawing.drawLine(rgba, start, end, new Scalar(255, 0, 0), 3);
+            Drawing.drawLine(rgba, start, end, new Scalar(255, 0, 255), 3);
         }
 
         lineArrayList = cullShortLines(lineArrayList, minLineLength);
 
+        ArrayList<Line> verticalLines = new ArrayList<>();
 
-        // At this point we should have lines
+        // At this point we should have long lines
+        for (Line l: lineArrayList) {
+            if (l.vertical(15)) {
+                verticalLines.add(l);
+            }
+        }
+
+        
+
+        // At this point we should have vertical lines
+
 
     }
+
 
     static ArrayList<Line> cullShortLines(ArrayList<Line> lines, double minLength) {
         ArrayList<Line> lineList = new ArrayList<>();

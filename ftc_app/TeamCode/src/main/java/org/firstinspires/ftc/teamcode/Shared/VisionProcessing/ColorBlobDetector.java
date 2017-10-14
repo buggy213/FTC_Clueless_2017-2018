@@ -33,6 +33,17 @@ public class ColorBlobDetector {
         mColorRadius = radius;
     }
 
+    public void setRgbColor(int r, int g, int b) {
+        Mat hsv = new Mat();
+        Mat rgb = new Mat(1, 1, CvType.CV_8UC(3), new Scalar(r, g, b));
+        Imgproc.cvtColor(rgb, hsv, Imgproc.COLOR_RGB2HSV_FULL, 3);
+        Scalar output = new Scalar(hsv.get(0, 0));
+        hsv.release();
+        rgb.release();
+
+        setHsvColor(output);
+    }
+
     public void setHsvColor(Scalar hsvColor) {
         double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0]-mColorRadius.val[0] : 0;
         double maxH = (hsvColor.val[0]+mColorRadius.val[0] <= 255) ? hsvColor.val[0]+mColorRadius.val[0] : 255;

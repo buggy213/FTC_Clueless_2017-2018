@@ -11,13 +11,15 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.opencv.core.CvType.CV_8U;
+import static org.opencv.core.CvType.CV_8UC1;
+
 /**
  * Created by Joshua on 9/25/2017.
  */
 
 public class CryptoboxDetector {
 
-    static Cryptobox cryptobox;
 
     final static int minLineLength = 50;
 
@@ -26,12 +28,12 @@ public class CryptoboxDetector {
 
     final static double maxGap = 35;
 
-    static Scalar lowerRed = new Scalar(150, 0, 0);
-    static Scalar upperRed = new Scalar(255, 120, 120);
+    final static double minHeightRatio = 1.2;
+
+    static Scalar lowerRed = new Scalar(10, 255, 255);
+    static Scalar upperRed = new Scalar(180, 255, 255);
 
     static Mat redArea = new Mat();
-
-    static Mat rgb = new Mat();
 
     static Mat blurredImg = new Mat();
 
@@ -43,17 +45,14 @@ public class CryptoboxDetector {
 
     static Mat debugImage = new Mat();
 
+
+    static Mat mask1 = new Mat();
+    static Mat mask2 = new Mat();
+
     static List<Contour> contours = new ArrayList<>();
 
-    // public static Cryptobox getCryptobox() {
-    //     return cryptobox;
-    // }
-
-    public static Mat detectCryptobox(Mat rgba, Mat gray) {
-        // if (cryptobox == null) {
-        //     cryptobox = new Cryptobox();
-        // }
-        debugImage = rgba.clone();
+    public static List<List<Contour>> detectCryptobox(Mat rgb, Mat gray) {
+        debugImage = rgb.clone();
         image = gray.clone();
         thresholdImage = gray.clone();
 
@@ -101,18 +100,33 @@ public class CryptoboxDetector {
             // l.draw(debugImage, new Scalar(255, 255, 0), 2);
         }
 
+        Mat kernel = Mat.ones(5,5, CV_8UC1);
+
+        Imgproc.cvtColor(rgb, blurredImg, Imgproc.COLOR_BGR2HSV);
+
+        Imgproc.erode(blurredImg, blurredImg, kernel);
+        // Dilate (blur) the mask to decrease processing power
+        Imgproc.dilate(blurredImg, blurredImg, kernel);
+        Imgproc.blur(blurredImg, blurredImg, new Size(6,6));
+
+        Mat blurRgb = new Mat();
+        Imgproc.cvtColor(blurredImg, blurRgb, Imgproc.COLOR_HSV2BGR);
+        Imgcodecs.imwrite("imgs/blurredimg.jpg", blurRgb);
+        blurRgb.release();
 
 
-        Imgproc.cvtColor(rgba, rgb, Imgproc.COLOR_BGR2RGB);
+        Core.inRange(blurredImg, new Scalar(0, 100, 100), lowerRed, mask1);
+        Core.inRange(blurredImg, new Scalar(170, 100, 100), upperRed, mask2);
 
-        Core.inRange(rgb, lowerRed, upperRed, redArea);
+        Core.bitwise_or(mask1, mask2, redArea);
 
-        //Dilate (blur) the mask to decrease processing power
-        Imgproc.dilate(redArea, blurredImg, new Mat());
+        // Mat structure = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(40, 100));
+        // Mat morphedImage = new Mat();
+        // Imgproc.morphologyEx(blurredImg, morphedImage, Imgproc.MORPH_CLOSE, structure);
 
         List<MatOfPoint> contourListTemp = new ArrayList<>();
 
-        Imgproc.findContours(blurredImg, contourListTemp, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(redArea, contourListTemp, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by area and resize to fit the original image size
         contours.clear();
@@ -121,10 +135,18 @@ public class CryptoboxDetector {
         }
 
         List<Contour> removalList = new ArrayList<>();
+        int indexOfMatOfPoints = 0;
         for (Contour c : contours) {
             if (c.area() < minArea || c.area() > maxArea) {
                 removalList.add(c);
+                continue;
             }
+
+            Rect rect = Imgproc.boundingRect(contourListTemp.get(indexOfMatOfPoints));
+            if (rect.height / rect.width < minHeightRatio) {
+                removalList.add(c);
+            }
+            indexOfMatOfPoints++;
         }
 
         contours.removeAll(removalList);
@@ -170,16 +192,18 @@ public class CryptoboxDetector {
             for (Contour c : contourGroup) {
                 System.out.println(c.center().x);
             }
+
+            index++;
         }
-        // At this point we should only have contours representing the walls of the cryptobox
+
+        // We now have groups of contours to work with. Hooray!
 
 
         Imgcodecs.imwrite("imgs/red.jpg", redArea);
 
         Imgcodecs.imwrite("imgs/debug.jpg", debugImage);
 
-        return rgba;
-
+        return contourGroups;
     }
 
 

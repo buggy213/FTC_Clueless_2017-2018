@@ -32,10 +32,14 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
 
@@ -54,21 +58,29 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
 @TeleOp(name="TeleOp", group="Linear Opmode")
 public class TelemetryOpmode extends LinearOpMode {
-    RobotHardware robot;
+
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    final double speedMultiplier = 0.75;
-    final double rotSpeed = 0.5;
 
     // final double deadZoneX = 0.5;
     // final double deadZoneY = 0.5;
+    Gamepad previousGamepad1 = new Gamepad();
+    Gamepad previousGamepad2 = new Gamepad();
+
+    double clawPos1;
+    double clawPos2;
+
+    boolean clawEngaged;
 
     @Override
     public void runOpMode() {
 
-        robot = RobotHardware.GetSingleton(hardwareMap);
+        RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
+        FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
+
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -120,26 +132,47 @@ public class TelemetryOpmode extends LinearOpMode {
             // boolean left = between(-deadZoneX, deadZoneX, gamepad1.left_stick_x);
             // boolean right = between(-deadZoneX, deadZoneX, gamepad1.right_stick_x);
 
-            double vRot = rotSpeed * (-gamepad1.left_trigger + gamepad1.right_trigger);
 
-            double speed = greater(Math.abs(gamepad1.right_stick_y), Math.abs(gamepad1.left_stick_x));
-            speed = Math.abs(speed * speedMultiplier);
+            // region driving
+            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0)) {
+                double turn = gamepad1.left_trigger - gamepad1.right_trigger;
+                double angle = Math.atan2(gamepad1.right_stick_y, gamepad1.left_stick_x);
+                drivetrain.MoveAngle(0.75, angle, turn);
+            }
+            //endregion
 
-            double desiredAngle = Math.atan2(gamepad1.right_stick_y, gamepad1.left_stick_x) ;
-            if (desiredAngle < 0) {
-                desiredAngle = desiredAngle + 2 * 3.14;
+            if (gamepad1.a && !previousGamepad1.a) {
+                clawEngaged = !clawEngaged;
             }
 
-            telemetry.addData("Desired degrees (CCW)", desiredAngle * 180 / 3.14);
+            telemetry.addData("Claw", clawEngaged);
 
-            double intermediateSin = Math.sin(desiredAngle + 0.79);
-            double intermediateCos = Math.cos(desiredAngle + 0.79);
+            if (clawEngaged) {
+                robot.clawServo1.setPosition(.1);
+                robot.clawServo2.setPosition(.8);
+            }
+            else {
+                robot.clawServo1.setPosition(0.4);
+                robot.clawServo2.setPosition(0.6);
+                clawPos1 = 0.4;
+                clawPos2 = 0.6;
+            }
 
-            double leftForward = speed * (intermediateSin) + vRot;
-            double leftBackward = speed * (intermediateCos) + vRot;
-            double rightForward = speed * (intermediateCos) - vRot;
-            double rightBackward = speed * (intermediateSin) - vRot;
+            double beltPower = (gamepad2.left_bumper ? 1 : 0) - (gamepad2.right_bumper ? 1 : 0);
 
+            robot.beltServo.setPower(beltPower);
+
+            double linearSlidePower = gamepad2.left_trigger - gamepad2.right_trigger;
+
+            robot.linearSlideMotor.setPower(linearSlidePower);
+
+            try {
+                previousGamepad1.copy(gamepad1);
+                previousGamepad2.copy(gamepad2);
+            }
+            catch (RobotCoreException e) {
+                RobotLog.e("Something went wrong while copying gamepads");
+            }
             /*if (left && right) {
                 // Both forward / backward
                 leftForward = gamepad1.left_stick_y;
@@ -168,19 +201,6 @@ public class TelemetryOpmode extends LinearOpMode {
                 rightForward = -power;
                 leftBackward = -power;
             }*/
-
-            robot.forwardLeft.setPower(leftForward);
-            robot.forwardRight.setPower(rightForward);
-            robot.backLeft.setPower(leftBackward);
-            robot.backRight.setPower(rightBackward);
-
-            telemetry.addData("Left stick x and y", gamepad1.left_stick_x + ", " + gamepad1.left_stick_y);
-            telemetry.addData("Right stick x and y", gamepad1.right_stick_x + ", " + gamepad1.right_stick_y);
-
-            telemetry.addData("Left forward power", leftForward);
-            telemetry.addData("Left backward power", leftBackward);
-            telemetry.addData("Right forward power", rightForward);
-            telemetry.addData("Right backward power", rightBackward);
 
 
             telemetry.update();

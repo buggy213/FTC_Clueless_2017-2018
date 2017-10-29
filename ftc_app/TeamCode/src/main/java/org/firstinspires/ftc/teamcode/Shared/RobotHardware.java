@@ -2,11 +2,13 @@ package org.firstinspires.ftc.teamcode.Shared;
 
 import android.util.Log;
 
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.robot.Robot;
 
 import java.lang.reflect.Array;
@@ -27,6 +29,14 @@ public class RobotHardware {
     public DcMotor forwardRight;
     public DcMotor backLeft;
     public DcMotor backRight;
+
+    public DcMotor linearSlideMotor;
+
+    public Servo clawServo1;
+    public Servo clawServo2;
+
+
+    public CRServo beltServo;
 
     public GyroSensor imu;
 
@@ -78,10 +88,12 @@ public class RobotHardware {
         backLeft = map.dcMotor.get("backLeft");
         backRight = map.dcMotor.get("backRight");
 
-        forwardLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        linearSlideMotor = map.dcMotor.get("linearSlideMotor");
 
+        clawServo1 = map.servo.get("clawServo1");
+        clawServo2 = map.servo.get("clawServo2");
 
+        beltServo = map.crservo.get("beltServo");
     }
 
 }

@@ -7,5 +7,5 @@ package org.firstinspires.ftc.teamcode.Shared;
 public interface MecanumDrivetrain {
     public void MoveCardinal(Direction direction, float speed);
 
-    public void MoveAngle(float speed, float angle);
+    public void MoveAngle(double speed, double angle, double turn);
 }

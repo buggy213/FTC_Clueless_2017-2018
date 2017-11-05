@@ -10,6 +10,6 @@ public class Main {
         Mat rgba = Imgcodecs.imread("imgs/test.jpg");
         Mat grey = new Mat();
         Imgproc.cvtColor(rgba, grey, Imgproc.COLOR_RGBA2GRAY);
-        rgba = CryptoboxDetector.detectCryptobox(rgba, grey);
+        CryptoboxDetector.detectCryptobox(rgba, grey);
     }
 }

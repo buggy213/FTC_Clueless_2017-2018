@@ -35,6 +35,7 @@ public class RobotHardware {
     public Servo clawServo1;
     public Servo clawServo2;
 
+    public CRServo relicClawServo;
 
     public CRServo beltServo;
 
@@ -88,10 +89,15 @@ public class RobotHardware {
         backLeft = map.dcMotor.get("backLeft");
         backRight = map.dcMotor.get("backRight");
 
+        forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
         linearSlideMotor = map.dcMotor.get("linearSlideMotor");
 
         clawServo1 = map.servo.get("clawServo1");
         clawServo2 = map.servo.get("clawServo2");
+
+        relicClawServo = map.crservo.get("relicClawServo");
 
         beltServo = map.crservo.get("beltServo");
     }

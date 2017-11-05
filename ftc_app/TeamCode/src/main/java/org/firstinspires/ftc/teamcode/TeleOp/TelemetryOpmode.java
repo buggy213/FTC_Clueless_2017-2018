@@ -34,11 +34,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
@@ -80,6 +82,8 @@ public class TelemetryOpmode extends LinearOpMode {
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
+        robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -131,17 +135,46 @@ public class TelemetryOpmode extends LinearOpMode {
             */
             // boolean left = between(-deadZoneX, deadZoneX, gamepad1.left_stick_x);
             // boolean right = between(-deadZoneX, deadZoneX, gamepad1.right_stick_x);
-
+            double turn = gamepad1.left_trigger - gamepad1.right_trigger;
 
             // region driving
-            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0)) {
-                double turn = gamepad1.left_trigger - gamepad1.right_trigger;
-                double angle = Math.atan2(gamepad1.right_stick_y, gamepad1.left_stick_x);
-                drivetrain.MoveAngle(0.75, angle, turn);
+            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
+                /*if (turn == 0) {
+                    if (gamepad1.left_stick_x == 0) {
+                        drivetrain.MoveCardinal(gamepad1.right_stick_y > 0 ? Direction.FORWARD : Direction.BACKWARD, Math.abs(gamepad1.right_stick_y));
+                    } else if (gamepad1.right_stick_y == 0) {
+                        drivetrain.MoveCardinal(gamepad1.left_stick_x > 0 ? Direction.RIGHT : Direction.LEFT, Math.abs(gamepad1.left_stick_x));
+                    }
+                    else {
+                        double angle = Math.atan2(gamepad1.left_stick_x, gamepad1.right_stick_y);
+                        drivetrain.MoveAngle(0.75, angle, turn);
+                    }
+                }
+                else {
+                    if (gamepad1.right_stick_y == 0 && gamepad1.left_stick_x == 0) {
+                        drivetrain.Rotate(turn < 0, turn);
+                    }
+                    else {
+                        double angle = Math.atan2(gamepad1.left_stick_x, gamepad1.right_stick_y);
+                        drivetrain.MoveAngle(0.75, angle, turn);
+                    }
+                }*/
+                double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
+
+                if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
+                    drivetrain.MoveAngle(0, angle, turn);
+                }
+                else {
+                    double speed = Math.abs((Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y)) / 2);
+                    drivetrain.MoveAngle(speed, angle, turn);
+                }
+            }
+            else {
+                drivetrain.stop();
             }
             //endregion
 
-            if (gamepad1.a && !previousGamepad1.a) {
+            if (gamepad1.x && !previousGamepad1.x) {
                 clawEngaged = !clawEngaged;
             }
 
@@ -157,6 +190,10 @@ public class TelemetryOpmode extends LinearOpMode {
                 clawPos1 = 0.4;
                 clawPos2 = 0.6;
             }
+
+            double clawPower = (gamepad2.a ? 1 : 0) - (gamepad2.b ? 1 : 0);
+
+            robot.relicClawServo.setPower(clawPower);
 
             double beltPower = (gamepad2.left_bumper ? 1 : 0) - (gamepad2.right_bumper ? 1 : 0);
 

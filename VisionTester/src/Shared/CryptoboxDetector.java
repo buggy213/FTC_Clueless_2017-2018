@@ -56,7 +56,7 @@ public class CryptoboxDetector {
         image = gray.clone();
         thresholdImage = gray.clone();
 
-        Imgproc.blur(image, thresholdImage, new Size(2, 2));
+        Imgproc.blur(image, thresholdImage, new Size(4, 4));
         Imgproc.Canny(thresholdImage, thresholdImage, 5, 75, 3, true);
 
         Imgcodecs.imwrite("imgs/canny.jpg", thresholdImage);

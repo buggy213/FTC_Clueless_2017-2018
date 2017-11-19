@@ -81,7 +81,7 @@ public class RobotHardware {
     public RobotHardware(HardwareMap map) {
         this.hwMap = map;
 
-        Field[] allFields = this.getClass().getDeclaredFields();
+        /*Field[] allFields = this.getClass().getDeclaredFields();
         for (Field field : allFields) {
             if (HardwareDevice.class.isAssignableFrom(field.getType())) {
                 // Hardware device, try to assign
@@ -92,8 +92,7 @@ public class RobotHardware {
                     RobotLog.e("Error during reflection mapping");
                 }
             }
-        }
-
+        }*/
         //TODO revisit reflection mapping
         /*
         Field[] allFields = this.getClass().getDeclaredFields();
@@ -118,7 +117,7 @@ public class RobotHardware {
             }
         }
 */
-        /*
+
         forwardLeft = map.dcMotor.get("forwardLeft");
         forwardRight = map.dcMotor.get("forwardRight");
         backLeft = map.dcMotor.get("backLeft");
@@ -135,7 +134,7 @@ public class RobotHardware {
         beltServo = map.crservo.get("beltServo");
 
         sensorDistance = map.get(DistanceSensor.class, "distanceColorSensor");
-        */
+
 
         forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);

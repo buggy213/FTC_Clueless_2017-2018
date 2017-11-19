@@ -111,7 +111,7 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             //endregion
 
-            if (gamepad1.x && !previousGamepad1.x) {
+            if (gamepad2.x && !previousGamepad2.x) {
                 clawEngaged = !clawEngaged;
             }
 

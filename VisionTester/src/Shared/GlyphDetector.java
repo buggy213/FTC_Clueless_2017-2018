@@ -36,7 +36,7 @@ public class GlyphDetector {
         Imgproc.cvtColor(image, image, Imgproc.COLOR_BGR2HSV);
 
         Core.inRange(image, lowerBrown, upperBrown, brown);
-        
+
         Imgcodecs.imwrite("imgs/brown.png", brown);
 
         brown.release();

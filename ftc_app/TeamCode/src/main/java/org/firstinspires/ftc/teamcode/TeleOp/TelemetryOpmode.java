@@ -61,13 +61,9 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 @TeleOp(name="TeleOp", group="Linear Opmode")
 public class TelemetryOpmode extends LinearOpMode {
 
-
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-
-    // final double deadZoneX = 0.5;
-    // final double deadZoneY = 0.5;
     Gamepad previousGamepad1 = new Gamepad();
     Gamepad previousGamepad2 = new Gamepad();
 
@@ -95,78 +91,19 @@ public class TelemetryOpmode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            /* Control Mode 1 - Not working
-            float leftPower = 0;
-            float rightPower = 0;
-
-            float forwardLeftPower = 0;
-            float forwardRightPower = 0;
-            float backLeftPower = 0;
-            float backRightPower = 0;
-
-            if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
-
-            }
-            else if (gamepad1.left_stick_x == 0) {
-                // Moving forwards or backwards
-                leftPower = rightPower += gamepad1.left_stick_y;
-            }
-            else if (gamepad1.left_stick_y == 0) {
-                // Moving side to side
-                forwardLeftPower = gamepad1.left_stick_x;
-                backLeftPower = -gamepad1.left_stick_x;
-                forwardRightPower = -gamepad1.left_stick_x;
-                backRightPower = gamepad1.left_stick_x;
-            }
-            else {
-                // Moving diagonally
-                // TODO this later i'm lazy lel
-            }
-
-            float rot = -gamepad1.left_trigger + gamepad1.right_trigger;
-            leftPower -= rot;
-            rightPower += rot;
-
-            robot.forwardLeft.setPower((forwardLeftPower + leftPower)/2);
-            robot.backLeft.setPower((backLeftPower + leftPower)/2);
-
-            robot.forwardRight.setPower((forwardRightPower + rightPower)/2);
-            robot.backRight.setPower((backRightPower + rightPower)/2);
-            */
-            // boolean left = between(-deadZoneX, deadZoneX, gamepad1.left_stick_x);
-            // boolean right = between(-deadZoneX, deadZoneX, gamepad1.right_stick_x);
+            // region driving
             double turn = gamepad1.left_trigger - gamepad1.right_trigger;
 
-            // region driving
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
-                /*if (turn == 0) {
-                    if (gamepad1.left_stick_x == 0) {
-                        drivetrain.MoveCardinal(gamepad1.right_stick_y > 0 ? Direction.FORWARD : Direction.BACKWARD, Math.abs(gamepad1.right_stick_y));
-                    } else if (gamepad1.right_stick_y == 0) {
-                        drivetrain.MoveCardinal(gamepad1.left_stick_x > 0 ? Direction.RIGHT : Direction.LEFT, Math.abs(gamepad1.left_stick_x));
-                    }
-                    else {
-                        double angle = Math.atan2(gamepad1.left_stick_x, gamepad1.right_stick_y);
-                        drivetrain.MoveAngle(0.75, angle, turn);
-                    }
-                }
-                else {
-                    if (gamepad1.right_stick_y == 0 && gamepad1.left_stick_x == 0) {
-                        drivetrain.Rotate(turn < 0, turn);
-                    }
-                    else {
-                        double angle = Math.atan2(gamepad1.left_stick_x, gamepad1.right_stick_y);
-                        drivetrain.MoveAngle(0.75, angle, turn);
-                    }
-                }*/
+
                 double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
 
                 if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
-                    drivetrain.MoveAngle(0, angle, turn);
+                    drivetrain.FieldOrientedDrive(0, angle, turn);
                 }
                 else {
                     double speed = Math.abs((Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y)) / 2);
-                    drivetrain.MoveAngle(speed, angle, turn);
+                    drivetrain.FieldOrientedDrive(speed, angle, turn);
                 }
             }
             else {
@@ -210,35 +147,6 @@ public class TelemetryOpmode extends LinearOpMode {
             catch (RobotCoreException e) {
                 RobotLog.e("Something went wrong while copying gamepads");
             }
-            /*if (left && right) {
-                // Both forward / backward
-                leftForward = gamepad1.left_stick_y;
-                leftBackward = gamepad1.left_stick_y;
-
-                rightForward = gamepad1.right_stick_y;
-                rightBackward = gamepad1.right_stick_y;
-            }
-            else if (left || right) {
-                // One side, one forward
-                // Moving diagonally
-                if (left) {
-                    // left is forward and backward
-                    // right is left and right
-
-                }
-                else {
-                    // right is forward and backward
-                    // left is left and right
-                }
-            }
-            else {
-                double power = (gamepad1.left_stick_x + gamepad1.right_stick_x) / 2;
-                leftForward = power;
-                rightBackward = power;
-                rightForward = -power;
-                leftBackward = -power;
-            }*/
-
 
             telemetry.update();
 

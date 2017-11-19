@@ -2,14 +2,18 @@ package org.firstinspires.ftc.teamcode.Shared;
 
 import android.util.Log;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.robot.Robot;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -35,12 +39,29 @@ public class RobotHardware {
     public Servo clawServo1;
     public Servo clawServo2;
 
+    public Servo phoneServo1;
+    public Servo phoneServo2;
+
     public CRServo relicClawServo;
 
     public CRServo beltServo;
 
-    public GyroSensor imu;
+    public DistanceSensor sensorDistance;
+    public BNO055IMU imu;
 
+    public void ReinitializeIMU() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        imu = hwMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
+    }
 
     public static RobotHardware GetSingleton(HardwareMap map) {
         if (hw == null) {
@@ -59,6 +80,19 @@ public class RobotHardware {
 
     public RobotHardware(HardwareMap map) {
         this.hwMap = map;
+
+        Field[] allFields = this.getClass().getDeclaredFields();
+        for (Field field : allFields) {
+            if (HardwareDevice.class.isAssignableFrom(field.getType())) {
+                // Hardware device, try to assign
+                try {
+                    field.set(this, hwMap.get(field.getClass(), field.getName()));
+                }
+                catch (IllegalAccessException e) {
+                    RobotLog.e("Error during reflection mapping");
+                }
+            }
+        }
 
         //TODO revisit reflection mapping
         /*
@@ -84,13 +118,12 @@ public class RobotHardware {
             }
         }
 */
+        /*
         forwardLeft = map.dcMotor.get("forwardLeft");
         forwardRight = map.dcMotor.get("forwardRight");
         backLeft = map.dcMotor.get("backLeft");
         backRight = map.dcMotor.get("backRight");
 
-        forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         linearSlideMotor = map.dcMotor.get("linearSlideMotor");
 
@@ -100,6 +133,17 @@ public class RobotHardware {
         relicClawServo = map.crservo.get("relicClawServo");
 
         beltServo = map.crservo.get("beltServo");
+
+        sensorDistance = map.get(DistanceSensor.class, "distanceColorSensor");
+        */
+
+        forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        forwardRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        forwardLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 }

@@ -35,7 +35,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
@@ -74,6 +76,9 @@ public class AutonomousOpMode extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+        hw.ReinitializeIMU();
+        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
+
         //region Vuforia
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -99,7 +104,6 @@ public class AutonomousOpMode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
             idle();
         }
     }

@@ -1,5 +1,12 @@
 package org.firstinspires.ftc.teamcode.Shared;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
 /**
  * Created by Joshua on 9/9/2017.
  */
@@ -7,9 +14,78 @@ package org.firstinspires.ftc.teamcode.Shared;
 public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     RobotHardware rw = RobotHardware.GetSingleton();
 
+    Orientation angles;
+
     final double speedMultiplier = 0.75;
     final double rotSpeed = 0.5;
     final double speedThreshold = 0.05;
+    final double turnThreshold = 2;
+
+    public void AutoMove(double speed, double angle, double counts) {
+        int initialForward = rw.forwardLeft.getCurrentPosition();
+        int initialBackward = rw.backLeft.getCurrentPosition();
+
+        MoveAngle(speed, angle, 0);
+
+        while (true) {
+            int differenceForward = Math.abs(rw.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(rw.backLeft.getCurrentPosition() - initialBackward);
+
+            if ((differenceBackward + differenceForward) / 2 > counts) {
+                stop();
+                break;
+            }
+        }
+    }
+
+    double normalize(double angle) {
+        if (angle < 0) {
+            angle += 360;
+        }
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        return angle;
+    }
+
+    public void GyroTurn(double speed, double angle) {
+        double x1 = Math.cos(angle);
+        double y1 = Math.sin(angle);
+
+        double heading = normalize(getHeading());
+
+        double x2 = Math.cos(heading);
+        double y2 = Math.sin(heading);
+
+        double c = (x1 * y2) - (y1 * x2);
+        if (c >= 0) {
+            // CCW
+            MoveAngle(0, 0, speed);
+
+        }
+        else if (c < 0) {
+            // CW
+            MoveAngle(0, 0, -speed);
+        }
+
+        double lower = normalize(angle - 2);
+        double upper = normalize(angle + 2);
+        while (true) {
+            heading = normalize(getHeading());
+            if (heading > lower && heading < upper) {
+                stop();
+                break;
+            }
+        }
+    }
+
+    public void OneEighty() {
+
+    }
+
+    public float getHeading() {
+        return rw.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+    }
 
     @Override
     public void MoveCardinal(Direction direction, float speed) {
@@ -55,6 +131,18 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             rw.backRight.setPower(-speed);
             rw.backLeft.setPower(speed);
         }
+    }
+
+    public void FieldOrientedDrive(double speed, double angle, double turn) {
+        float heading = getHeading();
+
+        if (heading < 0) {
+            heading += 360;
+        }
+
+        angle -= heading;
+
+        MoveAngle(speed, angle, turn);
     }
 
     @Override

@@ -34,7 +34,8 @@ public class RobotHardware {
     public DcMotor backLeft;
     public DcMotor backRight;
 
-    public DcMotor linearSlideMotor;
+    public DcMotor linearSlidePivotMotor;
+    public DcMotor linearSlideDriveMotor;
 
     public Servo clawServo1;
     public Servo clawServo2;
@@ -42,9 +43,12 @@ public class RobotHardware {
     public Servo phoneServo1;
     public Servo phoneServo2;
 
+    public Servo jewelArm1;
+    public Servo jewelArm2;
+
     public CRServo relicClawServo;
 
-    public CRServo beltServo;
+    public DcMotor beltMotor;
 
     public DistanceSensor sensorDistance;
     public BNO055IMU imu;
@@ -81,18 +85,20 @@ public class RobotHardware {
     public RobotHardware(HardwareMap map) {
         this.hwMap = map;
 
-        /*Field[] allFields = this.getClass().getDeclaredFields();
+        Field[] allFields = this.getClass().getDeclaredFields();
         for (Field field : allFields) {
+            RobotLog.i(field.getName() + ":" + field.getType());
             if (HardwareDevice.class.isAssignableFrom(field.getType())) {
+
                 // Hardware device, try to assign
                 try {
-                    field.set(this, hwMap.get(field.getClass(), field.getName()));
+                    field.set(this, hwMap.get(field.getType(), field.getName()));
                 }
                 catch (IllegalAccessException e) {
                     RobotLog.e("Error during reflection mapping");
                 }
             }
-        }*/
+        }
         //TODO revisit reflection mapping
         /*
         Field[] allFields = this.getClass().getDeclaredFields();
@@ -118,24 +124,28 @@ public class RobotHardware {
         }
 */
 
-        forwardLeft = map.dcMotor.get("forwardLeft");
+
+
+        /*forwardLeft = map.dcMotor.get("forwardLeft");
         forwardRight = map.dcMotor.get("forwardRight");
         backLeft = map.dcMotor.get("backLeft");
         backRight = map.dcMotor.get("backRight");
 
-
-        linearSlideMotor = map.dcMotor.get("linearSlideMotor");
+        linearSlidePivotMotor = map.dcMotor.get("linearSlidePivotMotor");
+        linearSlideDriveMotor = map.dcMotor.get("linearSlideDriveMotor");
 
         clawServo1 = map.servo.get("clawServo1");
         clawServo2 = map.servo.get("clawServo2");
 
         relicClawServo = map.crservo.get("relicClawServo");
 
-        beltServo = map.crservo.get("beltServo");
+        beltMotor = map.dcMotor.get("beltMotor");
+
+        phoneServo1 = map.servo.get("phoneMount1");
+        phoneServo2 = map.servo.get("phoneMount2");
 
         sensorDistance = map.get(DistanceSensor.class, "distanceColorSensor");
-
-
+*/
         forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 

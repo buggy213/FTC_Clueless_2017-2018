@@ -7,6 +7,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+
 /**
  * Created by Joshua on 9/9/2017.
  */
@@ -49,13 +52,13 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     }
 
     public void GyroTurn(double speed, double angle) {
-        double x1 = Math.cos(angle);
-        double y1 = Math.sin(angle);
+        double x1 = cos(angle);
+        double y1 = sin(angle);
 
         double heading = normalize(getHeading());
 
-        double x2 = Math.cos(heading);
-        double y2 = Math.sin(heading);
+        double x2 = cos(heading);
+        double y2 = sin(heading);
 
         double c = (x1 * y2) - (y1 * x2);
         if (c >= 0) {
@@ -133,14 +136,17 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
-    public void FieldOrientedDrive(double speed, double angle, double turn) {
+    public void FieldOrientedDrive(double speed, double forward, double strafe, double turn) {
         float heading = getHeading();
 
-        if (heading < 0) {
-            heading += 360;
-        }
+        double gyro_radians = heading * Math.PI/180;
+        double temp = forward * cos(gyro_radians) +
+                strafe * sin(gyro_radians);
+        strafe = -forward * sin(gyro_radians) +
+                strafe * cos(gyro_radians);
+        forward = temp;
 
-        angle -= heading;
+        double angle = Math.atan2(strafe, -forward);
 
         MoveAngle(speed, angle, turn);
     }
@@ -157,8 +163,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             desiredAngle = desiredAngle % (2 * Math.PI);
         }
 
-        double intermediateSin = Math.sin(desiredAngle);
-        double intermediateCos = Math.cos(desiredAngle);
+        double intermediateSin = sin(desiredAngle);
+        double intermediateCos = cos(desiredAngle);
 
         double leftForward = speed * (intermediateSin) + vRot;
         double leftBackward = speed * (intermediateCos) + vRot;

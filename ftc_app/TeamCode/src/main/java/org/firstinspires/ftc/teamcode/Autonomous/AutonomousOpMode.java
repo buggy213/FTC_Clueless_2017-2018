@@ -66,6 +66,8 @@ public class AutonomousOpMode extends LinearOpMode {
     // Used to access robot hardware
     RobotHardware hw = RobotHardware.GetSingleton(hardwareMap);
 
+    //
+
     // Stores instance of Vuforia Localizer
     VuforiaLocalizer vuforia;
 
@@ -104,6 +106,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
             idle();
         }
     }

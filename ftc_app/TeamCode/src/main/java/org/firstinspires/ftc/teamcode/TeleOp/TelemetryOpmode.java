@@ -85,8 +85,6 @@ public class TelemetryOpmode extends LinearOpMode {
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
-        robot.ReinitializeIMU();
-        robot.imu.startAccelerationIntegration(new Position(), new Velocity(), 150);
 
         robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);

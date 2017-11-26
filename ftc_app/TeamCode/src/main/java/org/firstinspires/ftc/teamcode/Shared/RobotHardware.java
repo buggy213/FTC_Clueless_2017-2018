@@ -5,6 +5,7 @@ import android.util.Log;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -37,8 +38,7 @@ public class RobotHardware {
     public DcMotor linearSlidePivotMotor;
     public DcMotor linearSlideDriveMotor;
 
-    public Servo clawServo1;
-    public Servo clawServo2;
+    public DcMotor clawMotor;
 
     public Servo phoneServo1;
     public Servo phoneServo2;
@@ -46,9 +46,10 @@ public class RobotHardware {
     public Servo jewelArm1;
     public Servo jewelArm2;
 
-    public CRServo relicClawServo;
-
     public DcMotor beltMotor;
+
+    public ColorSensor left_color;
+    public ColorSensor right_color;
 
     public DistanceSensor sensorDistance;
     public BNO055IMU imu;
@@ -149,10 +150,10 @@ public class RobotHardware {
         forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        forwardRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        forwardLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        forwardLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        forwardRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
 }

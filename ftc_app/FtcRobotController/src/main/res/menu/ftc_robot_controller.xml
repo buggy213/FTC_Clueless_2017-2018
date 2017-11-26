@@ -33,6 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
+  <item android:title="@string/parameters_menu_item"
+      android:id="@+id/action_setparameters" />
   <item
     android:id="@+id/action_settings"
     android:orderInCategory="100"

@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
@@ -72,11 +73,14 @@ public class AutonomousOpMode extends LinearOpMode {
     // Instance of relic trackable
     VuforiaTrackable relicTemplate;
 
+    RelicRecoveryVuMark lastKnownVumark = RelicRecoveryVuMark.UNKNOWN;
+
 
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException{
 
-        hw.ReinitializeIMU();
+        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
+
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
 
         //region Vuforia
@@ -84,12 +88,12 @@ public class AutonomousOpMode extends LinearOpMode {
         telemetry.update();
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        VuforiaLocalizer.Parameters vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        parameters.vuforiaLicenseKey = "ASK0CtX/////AAAAGbyNvvxXMUrohVJwXgMBW5Iqmz//UVeASb2KC//wHTXPuoN/gOM0vbw91nX++j+iS98pzeEfO+p9jpijt7j6VgQZlFTO9K2HjwAvTmG5M6CYglrh0B3kfA/nZx/NSyyxWIRe7Q03DeNDH50ZnSJ3I4FkyD7AbcTbJHg3LjL72N6/Lfm5biUbhOPoeQb1a8qUaqp1Il340pGFEvIEH8s7nhqHAga3TSdvM7yWxqRtZ3Bv2yEmIFMIWuBdEV6ahooWDsnnRmSn33bQVRD+KTNNocJWkwQ1pDG/8XBzswiICKBvcCvzklZhV/TeoJDk6tagk8sMcYxBdzMtyBlYVA9y3iJRyuzu+UMfswmSlA6CnmM/";
+        vuforiaParameters.vuforiaLicenseKey = "ASK0CtX/////AAAAGbyNvvxXMUrohVJwXgMBW5Iqmz//UVeASb2KC//wHTXPuoN/gOM0vbw91nX++j+iS98pzeEfO+p9jpijt7j6VgQZlFTO9K2HjwAvTmG5M6CYglrh0B3kfA/nZx/NSyyxWIRe7Q03DeNDH50ZnSJ3I4FkyD7AbcTbJHg3LjL72N6/Lfm5biUbhOPoeQb1a8qUaqp1Il340pGFEvIEH8s7nhqHAga3TSdvM7yWxqRtZ3Bv2yEmIFMIWuBdEV6ahooWDsnnRmSn33bQVRD+KTNNocJWkwQ1pDG/8XBzswiICKBvcCvzklZhV/TeoJDk6tagk8sMcYxBdzMtyBlYVA9y3iJRyuzu+UMfswmSlA6CnmM/";
 
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
+        vuforiaParameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        this.vuforia = ClassFactory.createVuforiaLocalizer(vuforiaParameters);
 
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         relicTemplate = relicTrackables.get(0);
@@ -104,15 +108,57 @@ public class AutonomousOpMode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            String mode = parameters.get("start");
+            boolean left;
+            if (mode == "RED_CLOSE" || mode == "RED_FAR") {
+                jewelArms(false);
+                wait(300);
+                int red = hw.right_color.red();
+                int blue = hw.right_color.blue();
+                boolean detectRed;
+                boolean detectBlue;
+                detectRed = red > parameters.getInt("red_threshold");
+
+                detectBlue = blue > parameters.getInt("blue_threshold");
+
+                if (detectBlue && !detectRed) {
+
+                }
+                if (detectRed && !detectBlue) {
+
+                }
+            }
+            else if (mode == "BLUE_CLOSE" || mode == "BLUE_FAR") {
+                jewelArms(true);
+                wait(300);
+            }
+
 
             idle();
         }
+    }
+
+
+
+    // TODO add proper servo values
+
+    private void jewelArms(boolean left) {
+        if (left) {
+            hw.jewelArm1.setPosition(0);
+        } else {
+            hw.jewelArm2.setPosition(0);
+        }
+    }
+    private void resetJewelArms() {
+        hw.jewelArm1.setPosition(0);
+        hw.jewelArm2.setPosition(0);
     }
 
     private void prestart() {
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
         if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
             telemetry.addData("VuMark", "%s visible", vuMark);
+            lastKnownVumark = vuMark;
         }
         else {
             telemetry.addData("VuMark", "not visible");

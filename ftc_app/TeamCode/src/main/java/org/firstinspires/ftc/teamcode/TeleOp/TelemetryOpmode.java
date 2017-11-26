@@ -73,11 +73,8 @@ public class TelemetryOpmode extends LinearOpMode {
     Gamepad previousGamepad1 = new Gamepad();
     Gamepad previousGamepad2 = new Gamepad();
 
-    double clawPos1;
-    double clawPos2;
-
-    boolean clawEngaged;
-    boolean relicMode;
+    double clawSensitivity = 0.35;
+    double turnSpeed = 0.6;
 
     @Override
     public void runOpMode() {
@@ -100,59 +97,37 @@ public class TelemetryOpmode extends LinearOpMode {
         while (opModeIsActive()) {
 
             // region driving
-            double turn = gamepad1.left_trigger - gamepad1.right_trigger;
+            double turn = (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
 
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
 
-                double speed = 1;
-                drivetrain.FieldOrientedDrive(speed, gamepad1.right_stick_y, gamepad1.left_stick_x, turn);
+                double speed = 0.9;
+                if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
+                    speed = 0;
+                }
+                if ((Math.abs(gamepad1.left_stick_x) < 0.8 && gamepad1.left_stick_x != 0) && (Math.abs(gamepad1.right_stick_y) < 0.8 && gamepad1.right_stick_y != 0)){
+                    speed = Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y);
+                    speed /= 2;
+                }
+                double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
+                drivetrain.MoveAngle(speed, angle, turn);
             }
             else {
                 drivetrain.stop();
             }
             //endregion
 
-            if (gamepad2.a && !previousGamepad2.a) {
-                clawEngaged = !clawEngaged;
-            }
+            double clawPower = (gamepad2.right_trigger - gamepad2.left_trigger) * clawSensitivity;
 
-            if (gamepad2.y && !previousGamepad2.y) {
-                relicMode = !relicMode;
-            }
-
-            telemetry.addData("Claw", clawEngaged);
-
-            if (relicMode) {
-                robot.clawServo1.setPosition(0.44);
-                robot.clawServo2.setPosition(0.45);
-            }
-
-            if (!clawEngaged && !relicMode) {
-                robot.clawServo1.setPosition(0);
-                robot.clawServo2.setPosition(.85);
-            }
-            else if (!relicMode){
-                robot.clawServo1.setPosition(0.36);
-                robot.clawServo2.setPosition(0.53);
-                clawPos1 = 0.4;
-                clawPos2 = 0.6;
-            }
-
-            double relicClawPower = gamepad2.left_trigger - gamepad2.right_trigger;
-            robot.relicClawServo.setPower(relicClawPower);
+            robot.clawMotor.setPower(clawPower);
 
             double beltPower = gamepad2.right_stick_x;
 
             robot.beltMotor.setPower(beltPower);
 
-            double linearSlidePivotPower = gamepad2.left_stick_x;
+            double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
 
-            if (Math.abs(linearSlidePivotPower) > 0.8) {
-                robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
-            }
-            else {
-                robot.linearSlidePivotMotor.setPower(0);
-            }
+            robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
 
             double linearSlideDrivePower = gamepad2.left_stick_y;
 
@@ -165,7 +140,7 @@ public class TelemetryOpmode extends LinearOpMode {
             catch (RobotCoreException e) {
                 RobotLog.e("Something went wrong while copying gamepads");
             }
-            telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
+            // telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
             telemetry.update();
         }
     }

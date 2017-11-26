@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Created by hsunx on 11/24/2017.
@@ -20,28 +21,26 @@ public class MatchParameters {
         parameters = new HashMap<>();
     }
 
-    public static MatchParameters loadParameters() {
-        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "parameters.txt");
+    public static MatchParameters loadParameters(String data) {
         //Read text from file
         MatchParameters mp = new MatchParameters();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                String[] split = line.split(":");
-                mp.parameters.put(split[0], split[1]);
-            }
-            br.close();
+        String[] lines = data.split("\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String[] results = lines[i].split(":");
+            mp.put(results[0], results[1]);
         }
-        catch (IOException e) {
-            //You'll need to add proper error handling here
-        }
-
         return mp;
+    }
+
+    public void put(String key, String value) {
+        parameters.put(key, value);
     }
 
     public String get(String key) {
         return parameters.get(key);
+    }
+
+    public int getInt(String key) {
+        return Integer.valueOf(parameters.get(key));
     }
 }

@@ -111,12 +111,15 @@ import org.firstinspires.inspection.RcInspectionActivity;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.regex.MatchResult;
 
 @SuppressWarnings("WeakerAccess")
 public class FtcRobotControllerActivity extends Activity
   {
   public static final String TAG = "RCActivity";
   public String getTag() { return TAG; }
+
+    public static String matchParameterData;
 
   private static final int REQUEST_CONFIG_WIFI_CHANNEL = 1;
   private static final int NUM_GAMEPADS = 2;
@@ -478,6 +481,11 @@ public class FtcRobotControllerActivity extends Activity
       startActivity(inspectionModeIntent);
       return true;
     }
+    else if (id == R.id.action_setparameters) {
+      Intent setParametersIntent = new Intent(AppUtil.getDefContext(), SetParametersActivity.class);
+      startActivityForResult(setParametersIntent, 42);
+      return true;
+    }
     else if (id == R.id.action_blocks) {
       Intent blocksIntent = new Intent(AppUtil.getDefContext(), BlocksActivity.class);
       startActivity(blocksIntent);
@@ -532,6 +540,17 @@ public class FtcRobotControllerActivity extends Activity
     if (request == RequestCode.CONFIGURE_ROBOT_CONTROLLER.ordinal() || request == RequestCode.SETTINGS_ROBOT_CONTROLLER.ordinal()) {
       // We always do a refresh, whether it was a cancel or an OK, for robustness
       cfgFileMgr.getActiveConfigAndUpdateUI();
+    }
+
+    if (request == 42) {
+      if (result == RESULT_OK) {
+        String data = intent.getStringExtra("data");
+        matchParameterData = data;
+        RobotLog.i("---------------------------");
+        RobotLog.i(data);
+        RobotLog.i("---------------------------");
+        AppUtil.getInstance().showToast(UILocation.BOTH, context, "Match Parameters Set");
+      }
     }
   }
 

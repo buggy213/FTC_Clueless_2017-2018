@@ -41,6 +41,10 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    public void AutoMove(double speed, double angle, double seconds) {
+        
+    }
+
     double normalize(double angle) {
         if (angle < 0) {
             angle += 360;

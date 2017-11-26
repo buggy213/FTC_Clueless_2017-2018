@@ -42,6 +42,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
 
@@ -67,6 +68,7 @@ public class AutonomousOpMode extends LinearOpMode {
     // Used to access robot hardware
     RobotHardware hw = RobotHardware.GetSingleton(hardwareMap);
 
+
     // Stores instance of Vuforia Localizer
     VuforiaLocalizer vuforia;
 
@@ -82,6 +84,8 @@ public class AutonomousOpMode extends LinearOpMode {
         MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
 
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
+
+        FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -124,7 +128,10 @@ public class AutonomousOpMode extends LinearOpMode {
                 if (detectBlue && !detectRed) {
 
                 }
-                if (detectRed && !detectBlue) {
+                else if (detectRed && !detectBlue) {
+
+                }
+                else {
 
                 }
             }

@@ -75,6 +75,10 @@ public class TelemetryOpmode extends LinearOpMode {
 
     double clawSensitivity = 0.35;
     double turnSpeed = 0.6;
+    double slowSpeed = 0.4;
+
+    boolean clawEngaged = false;
+    boolean slowMode = true;
 
     @Override
     public void runOpMode() {
@@ -82,6 +86,10 @@ public class TelemetryOpmode extends LinearOpMode {
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
+
+        drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        drivetrain.setSpeedMultiplier(slowSpeed);
 
         robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -97,18 +105,19 @@ public class TelemetryOpmode extends LinearOpMode {
         while (opModeIsActive()) {
 
             // region driving
-            double turn = (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
+            double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
 
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
 
-                double speed = 0.9;
+                double speed = 1;
+                if (gamepad1.right_stick_y == 0) {
+                    speed = 1.25;
+                }
+
                 if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
                     speed = 0;
                 }
-                if ((Math.abs(gamepad1.left_stick_x) < 0.8 && gamepad1.left_stick_x != 0) && (Math.abs(gamepad1.right_stick_y) < 0.8 && gamepad1.right_stick_y != 0)){
-                    speed = Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y);
-                    speed /= 2;
-                }
+
                 double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
                 drivetrain.MoveAngle(speed, angle, turn);
             }
@@ -117,9 +126,27 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             //endregion
 
-            double clawPower = (gamepad2.right_trigger - gamepad2.left_trigger) * clawSensitivity;
+            if (!previousGamepad2.a && gamepad2.a) {
+                clawEngaged = !clawEngaged;
+            }
+            if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
+                slowMode = !slowMode;
+                if (slowMode) {
+                    drivetrain.setSpeedMultiplier(slowSpeed);
+                }
+                else {
+                    drivetrain.setSpeedMultiplier(1);
+                }
+            }
 
-            robot.clawMotor.setPower(clawPower);
+            if (clawEngaged) {
+                robot.clawServo1.setPosition(0.52);
+                robot.clawServo2.setPosition(0.39);
+            }
+            else {
+                robot.clawServo1.setPosition(0.20);
+                robot.clawServo2.setPosition(0.74);
+            }
 
             double beltPower = gamepad2.right_stick_x;
 

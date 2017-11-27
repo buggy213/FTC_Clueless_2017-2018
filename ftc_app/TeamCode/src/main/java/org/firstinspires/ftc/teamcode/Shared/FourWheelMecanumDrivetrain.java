@@ -19,12 +19,13 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
 
     Orientation angles;
 
-    final double speedMultiplier = 0.75;
+    double speedMultiplier = 0.75;
+
     final double rotSpeed = 0.5;
     final double speedThreshold = 0.05;
     final double turnThreshold = 2;
 
-    public void AutoMove(double speed, double angle, double counts) {
+    public void AutoMove(double speed, double angle, int counts) {
         int initialForward = rw.forwardLeft.getCurrentPosition();
         int initialBackward = rw.backLeft.getCurrentPosition();
 
@@ -41,8 +42,10 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
-    public void AutoMove(double speed, double angle, double seconds) {
-        
+    public void turn(boolean clockwise, double speed, double seconds) throws InterruptedException{
+        Rotate(clockwise, speed);
+        wait((long)(seconds * 1000));
+        stop();
     }
 
     double normalize(double angle) {
@@ -75,8 +78,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             MoveAngle(0, 0, -speed);
         }
 
-        double lower = normalize(angle - 2);
-        double upper = normalize(angle + 2);
+        double lower = normalize(angle - turnThreshold);
+        double upper = normalize(angle + turnThreshold);
         while (true) {
             heading = normalize(getHeading());
             if (heading > lower && heading < upper) {
@@ -127,16 +130,16 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
 
     public void Rotate(boolean clockwise, double speed) {
         if (clockwise) {
-            rw.forwardRight.setPower(speed);
-            rw.forwardLeft.setPower(-speed);
-            rw.backRight.setPower(speed);
-            rw.backLeft.setPower(-speed);
+            setPower(rw.forwardRight, speed);
+            setPower(rw.forwardLeft, -speed);
+            setPower(rw.backRight, speed);
+            setPower(rw.backLeft, -speed);
         }
         else {
-            rw.forwardRight.setPower(-speed);
-            rw.forwardLeft.setPower(speed);
-            rw.backRight.setPower(-speed);
-            rw.backLeft.setPower(speed);
+            setPower(rw.forwardRight, -speed);
+            setPower(rw.forwardLeft, speed);
+            setPower(rw.backRight, -speed);
+            setPower(rw.backLeft, speed);
         }
     }
 
@@ -187,10 +190,14 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         if (Math.abs(leftForward) < speedThreshold) {
             leftForward = 0;
         }
-        rw.forwardRight.setPower(rightForward);
-        rw.forwardLeft.setPower(leftForward);
-        rw.backRight.setPower(rightBackward);
-        rw.backLeft.setPower(leftBackward);
+        setPower(rw.forwardRight, rightForward);
+        setPower(rw.forwardLeft, leftForward);
+        setPower(rw.backRight, rightBackward);
+        setPower(rw.backLeft, leftBackward);
+    }
+
+    public void setPower(DcMotor motor, double speed) {
+        motor.setPower((speed * speedMultiplier));
     }
 
     public void stop() {
@@ -199,4 +206,16 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         rw.backRight.setPower(0);
         rw.backLeft.setPower(0);
     }
+
+    public void setMotorZeroPower(DcMotor.ZeroPowerBehavior zeroPower) {
+        rw.forwardRight.setZeroPowerBehavior(zeroPower);
+        rw.forwardLeft.setZeroPowerBehavior(zeroPower);
+        rw.backRight.setZeroPowerBehavior(zeroPower);
+        rw.backLeft.setZeroPowerBehavior(zeroPower);
+    }
+
+    public void setSpeedMultiplier(double speedMultiplier) {
+        this.speedMultiplier = speedMultiplier;
+    }
+
 }

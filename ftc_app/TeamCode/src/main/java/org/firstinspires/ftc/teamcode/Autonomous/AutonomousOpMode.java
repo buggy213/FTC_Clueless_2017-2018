@@ -36,12 +36,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
@@ -68,6 +70,7 @@ public class AutonomousOpMode extends LinearOpMode {
     // Used to access robot hardware
     RobotHardware hw = RobotHardware.GetSingleton(hardwareMap);
 
+    FourWheelMecanumDrivetrain drivetrain;
 
     // Stores instance of Vuforia Localizer
     VuforiaLocalizer vuforia;
@@ -77,6 +80,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
     RelicRecoveryVuMark lastKnownVumark = RelicRecoveryVuMark.UNKNOWN;
 
+    double distanceThreshold;
 
     @Override
     public void runOpMode() throws InterruptedException{
@@ -85,7 +89,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
 
-        FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
+        drivetrain = new FourWheelMecanumDrivetrain();
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -113,35 +117,87 @@ public class AutonomousOpMode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             String mode = parameters.get("start");
-            boolean left;
-            if (mode == "RED_CLOSE" || mode == "RED_FAR") {
+            boolean close = mode.contains("CLOSE");
+            boolean red = mode.contains("RED");
+
+            if (red) {
                 jewelArms(false);
                 wait(300);
-                int red = hw.right_color.red();
+                int redVal = hw.right_color.red();
                 int blue = hw.right_color.blue();
                 boolean detectRed;
                 boolean detectBlue;
-                detectRed = red > parameters.getInt("red_threshold");
+                detectRed = redVal > parameters.getInt("red_threshold");
 
                 detectBlue = blue > parameters.getInt("blue_threshold");
 
                 if (detectBlue && !detectRed) {
-
+                    drivetrain.turn(true, 0.2, 0.5);
                 }
                 else if (detectRed && !detectBlue) {
-
+                    drivetrain.turn(false, 0.2, 0.5);
                 }
                 else {
-
+                    // Well fuck. Guess you just keep going?
                 }
             }
-            else if (mode == "BLUE_CLOSE" || mode == "BLUE_FAR") {
+            else {
                 jewelArms(true);
                 wait(300);
+                int redVal = hw.right_color.red();
+                int blue = hw.right_color.blue();
+                boolean detectRed;
+                boolean detectBlue;
+                detectRed = redVal > parameters.getInt("red_threshold");
+
+                detectBlue = blue > parameters.getInt("blue_threshold");
+
+                if (detectBlue && !detectRed) {
+                    drivetrain.turn(false, 0.2, 0.5);
+                }
+                else if (detectRed && !detectBlue) {
+                    drivetrain.turn(true, 0.2, 0.5);
+                }
+                else {
+                    // Well fuck. Guess you just keep going?
+                }
             }
+
+            drivetrain.GyroTurn(0.2, 0);
+            drivetrain.AutoMove(0.5, 0, 5000);
+
+            if (close) {
+                if (red) {
+                    drivetrain.GyroTurn(0.2, 90);
+                    moveCrypto(false);
+                }
+                else {
+                    drivetrain.GyroTurn(0.2, -90);
+                    moveCrypto(true);
+                }
+            }
+            else {
+                if(red) {
+                    moveCrypto(false);
+                }
+                else {
+                    moveCrypto(true);
+                }
+            }
+
 
 
             idle();
+        }
+    }
+
+    public void moveCrypto(boolean fromLeft) {
+        int index = 0;
+        while (true) {
+            drivetrain.MoveCardinal(fromLeft ? Direction.RIGHT : Direction.LEFT, 0.4f);
+            if (hw.sensorDistance.getDistance(DistanceUnit.CM) < distanceThreshold) {
+                index++;
+            }
         }
     }
 

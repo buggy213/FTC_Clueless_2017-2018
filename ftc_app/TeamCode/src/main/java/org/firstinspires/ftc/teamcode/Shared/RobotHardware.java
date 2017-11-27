@@ -38,7 +38,8 @@ public class RobotHardware {
     public DcMotor linearSlidePivotMotor;
     public DcMotor linearSlideDriveMotor;
 
-    public DcMotor clawMotor;
+    public Servo clawServo1;
+    public Servo clawServo2;
 
     public Servo phoneServo1;
     public Servo phoneServo2;
@@ -154,6 +155,8 @@ public class RobotHardware {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         forwardLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         forwardRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
 }

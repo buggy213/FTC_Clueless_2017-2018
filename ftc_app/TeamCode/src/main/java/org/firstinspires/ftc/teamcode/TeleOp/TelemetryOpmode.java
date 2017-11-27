@@ -140,12 +140,12 @@ public class TelemetryOpmode extends LinearOpMode {
             }
 
             if (clawEngaged) {
-                robot.clawServo1.setPosition(0.52);
-                robot.clawServo2.setPosition(0.39);
+                robot.clawServo1.setPosition(0.540);
+                robot.clawServo2.setPosition(0.301);
             }
             else {
-                robot.clawServo1.setPosition(0.20);
-                robot.clawServo2.setPosition(0.74);
+                robot.clawServo1.setPosition(0.202);
+                robot.clawServo2.setPosition(0.661);
             }
 
             double beltPower = gamepad2.right_stick_x;

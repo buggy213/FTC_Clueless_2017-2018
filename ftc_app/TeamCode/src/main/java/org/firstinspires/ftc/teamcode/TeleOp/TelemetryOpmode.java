@@ -73,9 +73,10 @@ public class TelemetryOpmode extends LinearOpMode {
     Gamepad previousGamepad1 = new Gamepad();
     Gamepad previousGamepad2 = new Gamepad();
 
-    double clawSensitivity = 0.35;
-    double turnSpeed = 0.6;
-    double slowSpeed = 0.4;
+    // Constants for teleop
+    final double clawSensitivity = 0.35;
+    final double turnSpeed = 0.6;
+    final double slowSpeed = 0.4;
 
     boolean clawEngaged = false;
     boolean slowMode = true;
@@ -103,7 +104,7 @@ public class TelemetryOpmode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
+            // Driving/Gamepads logic
             // region driving
             double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
 

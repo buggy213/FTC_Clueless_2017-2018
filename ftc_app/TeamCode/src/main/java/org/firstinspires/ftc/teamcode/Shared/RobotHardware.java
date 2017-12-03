@@ -55,6 +55,7 @@ public class RobotHardware {
     public DistanceSensor sensorDistance;
     public BNO055IMU imu;
 
+    // Initializes the BNO055 IMU built into the REV Expansion Hub
     public void ReinitializeIMU() {
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -69,6 +70,7 @@ public class RobotHardware {
 
     }
 
+    // Access the singleton of the RHW class
     public static RobotHardware GetSingleton(HardwareMap map) {
         if (hw == null) {
             hw = new RobotHardware(map);
@@ -87,6 +89,7 @@ public class RobotHardware {
     public RobotHardware(HardwareMap map) {
         this.hwMap = map;
 
+        // Reflection mapping; program looks at itself to determine what fieldsshould be initialized and to what values
         Field[] allFields = this.getClass().getDeclaredFields();
         for (Field field : allFields) {
             RobotLog.i(field.getName() + ":" + field.getType());
@@ -101,53 +104,7 @@ public class RobotHardware {
                 }
             }
         }
-        //TODO revisit reflection mapping
-        /*
-        Field[] allFields = this.getClass().getDeclaredFields();
-        ArrayList<Field> deviceFields = new ArrayList<Field>();
 
-        for (Field field : allFields) {
-            Log.d("Map", field.getName() + "|" + field.getType().toString());
-            try {
-                if (field.get(this)) {
-                    deviceFields.add(field);
-                }
-            } catch (Exception e) {
-                Log.e("HardwareMap", e.toString());
-            }
-        }
-        for (Field f : deviceFields) {
-            Log.d("Map", f.getName() + f.getType().toString());
-            try {
-                f.set(this, map.get(f.getName()));
-            } catch (Exception e) {
-                Log.e("HardwareMap", e.toString());
-            }
-        }
-*/
-
-
-
-        /*forwardLeft = map.dcMotor.get("forwardLeft");
-        forwardRight = map.dcMotor.get("forwardRight");
-        backLeft = map.dcMotor.get("backLeft");
-        backRight = map.dcMotor.get("backRight");
-
-        linearSlidePivotMotor = map.dcMotor.get("linearSlidePivotMotor");
-        linearSlideDriveMotor = map.dcMotor.get("linearSlideDriveMotor");
-
-        clawServo1 = map.servo.get("clawServo1");
-        clawServo2 = map.servo.get("clawServo2");
-
-        relicClawServo = map.crservo.get("relicClawServo");
-
-        beltMotor = map.dcMotor.get("beltMotor");
-
-        phoneServo1 = map.servo.get("phoneMount1");
-        phoneServo2 = map.servo.get("phoneMount2");
-
-        sensorDistance = map.get(DistanceSensor.class, "distanceColorSensor");
-*/
         forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 

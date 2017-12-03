@@ -21,10 +21,13 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
 
     double speedMultiplier = 0.75;
 
+    // Constants used to adjust various parameters / characteristics of the drivetrain
     final double rotSpeed = 0.5;
     final double speedThreshold = 0.05;
     final double turnThreshold = 2;
 
+    // region auto
+    // Primary movement method for auto
     public void AutoMove(double speed, double angle, int counts) {
         int initialForward = rw.forwardLeft.getCurrentPosition();
         int initialBackward = rw.backLeft.getCurrentPosition();
@@ -42,22 +45,14 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    // "Dumb" turn, based on time
     public void turn(boolean clockwise, double speed, double seconds) throws InterruptedException{
         Rotate(clockwise, speed);
         wait((long)(seconds * 1000));
         stop();
     }
 
-    double normalize(double angle) {
-        if (angle < 0) {
-            angle += 360;
-        }
-        if (angle >= 360) {
-            angle -= 360;
-        }
-        return angle;
-    }
-
+    // Gyroscope Sensor based turn, untested
     public void GyroTurn(double speed, double angle) {
         double x1 = cos(angle);
         double y1 = sin(angle);
@@ -89,6 +84,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    // Pulls a one-eighty using the gyro, doesn't need to be precise
     public void OneEighty() {
 
     }
@@ -96,6 +92,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     public float getHeading() {
         return rw.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
+
+    //endregion
 
     @Override
     public void MoveCardinal(Direction direction, float speed) {
@@ -128,6 +126,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    // Turns robot
     public void Rotate(boolean clockwise, double speed) {
         if (clockwise) {
             setPower(rw.forwardRight, speed);
@@ -143,6 +142,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    // Moves robot relative to the field, rather than itself. Fails miserably when having to move diagonally in a consistent manner
     public void FieldOrientedDrive(double speed, double forward, double strafe, double turn) {
         float heading = getHeading();
 
@@ -158,6 +158,14 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         MoveAngle(speed, angle, turn);
     }
 
+    // Primary movement methods
+
+    /**
+     *
+     * @param speed The speed of the robot from -1 to 1
+     * @param angle Angle (in radians) that the robot should go
+     * @param turn Turning velocity
+     */
     @Override
     public void MoveAngle(double speed, double angle, double turn) {
         double vRot = turn;
@@ -200,6 +208,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         motor.setPower((speed * speedMultiplier));
     }
 
+    // Ceases all movement
     public void stop() {
         rw.forwardRight.setPower(0);
         rw.forwardLeft.setPower(0);
@@ -207,6 +216,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         rw.backLeft.setPower(0);
     }
 
+    // Blanket sets all zero power behaviours for the entire drivetrain
     public void setMotorZeroPower(DcMotor.ZeroPowerBehavior zeroPower) {
         rw.forwardRight.setZeroPowerBehavior(zeroPower);
         rw.forwardLeft.setZeroPowerBehavior(zeroPower);
@@ -214,8 +224,19 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         rw.backLeft.setZeroPowerBehavior(zeroPower);
     }
 
+    // Sets the "overall" speed of the drivetrain
     public void setSpeedMultiplier(double speedMultiplier) {
         this.speedMultiplier = speedMultiplier;
+    }
+
+    double normalize(double angle) {
+        if (angle < 0) {
+            angle += 360;
+        }
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        return angle;
     }
 
 }

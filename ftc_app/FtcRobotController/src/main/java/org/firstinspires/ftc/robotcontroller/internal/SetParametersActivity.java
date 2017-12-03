@@ -23,6 +23,8 @@ import java.util.List;
  */
 
 public class SetParametersActivity extends Activity {
+
+    // String array containing parameters that need to be set
     String[] values = {
             "ENUM",
             "start,RED_CLOSE,RED_FAR,BLUE_CLOSE,BLUE_FAR",
@@ -40,6 +42,7 @@ public class SetParametersActivity extends Activity {
         final LinearLayout layout = (LinearLayout) findViewById(R.id.layout);
 
         for(int i = 0; i < values.length; i++) {
+            // Parse string array and add components to LinearLayout accordingly
             String value = values[i];
             String[] args = null;
             if (value == "ENUM" || value == "NUMBER") {
@@ -72,6 +75,7 @@ public class SetParametersActivity extends Activity {
             }
         }
 
+        // Returns inputted data
 
         Button saveButton = (Button) findViewById(R.id.button);
         saveButton.setOnClickListener(new View.OnClickListener() {

@@ -15,6 +15,7 @@ import java.util.PriorityQueue;
  * Created by hsunx on 11/24/2017.
  */
 
+// OpMode interface to the MatchParameters
 public class MatchParameters {
     Map<String, String> parameters;
     public MatchParameters() {
@@ -22,7 +23,7 @@ public class MatchParameters {
     }
 
     public static MatchParameters loadParameters(String data) {
-        //Read text from file
+        //Read text from file, parse and store in a Map (Dictionary)
         MatchParameters mp = new MatchParameters();
         String[] lines = data.split("\\n");
         for (int i = 0; i < lines.length; i++) {

@@ -185,7 +185,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 }
             }
 
-
+            hw.imu.stopAccelerationIntegration();
 
             idle();
         }
@@ -243,5 +243,4 @@ public class AutonomousOpMode extends LinearOpMode {
             prestart();
         }
     }
-
 }

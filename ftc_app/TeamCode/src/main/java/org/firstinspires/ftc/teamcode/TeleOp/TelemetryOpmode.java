@@ -74,11 +74,16 @@ public class TelemetryOpmode extends LinearOpMode {
     Gamepad previousGamepad2 = new Gamepad();
 
     // Constants for teleop
-    final double clawSensitivity = 0.35;
     final double turnSpeed = 0.6;
     final double slowSpeed = 0.4;
 
-    boolean clawEngaged = false;
+    int index;
+
+    boolean upperClawEngaged = false;
+    boolean lowerClawEngaged = false;
+
+    boolean altClawTurned = false;
+
     boolean slowMode = true;
 
     @Override
@@ -128,7 +133,56 @@ public class TelemetryOpmode extends LinearOpMode {
             //endregion
 
             if (!previousGamepad2.a && gamepad2.a) {
-                clawEngaged = !clawEngaged;
+                upperClawEngaged = !upperClawEngaged;
+            }
+            if (!previousGamepad2.b && gamepad2.b) {
+                lowerClawEngaged = !lowerClawEngaged;
+            }
+
+            if (!previousGamepad2.dpad_left && gamepad2.dpad_left) {
+                index++;
+                index = index % 3;
+            }
+            if (!previousGamepad2.dpad_right && gamepad2.dpad_right) {
+                index--;
+                if (index < 0) {
+                    index = 2;
+                }
+            }
+
+            switch (index) {
+                case 0:
+                    // Resting
+                    robot.altClawLeft.setPosition(0.864);
+                    robot.altClawRight.setPosition(0.079);
+                    break;
+                case 1:
+                    // Ready to grab
+                    robot.altClawLeft.setPosition(0.127);
+                    robot.altClawRight.setPosition(0.839);
+                    break;
+                case 2:
+                    // Grabbing
+                    robot.altClawLeft.setPosition(0.374);
+                    robot.altClawRight.setPosition(0.555);
+                    break;
+            }
+
+            if (gamepad2.dpad_up && !previousGamepad2.dpad_up) {
+                altClawTurned = !altClawTurned;
+            }
+
+            if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {
+                index = 0;
+            }
+
+            if (gamepad2.x) {
+                upperClawEngaged = false;
+                lowerClawEngaged = false;
+            }
+            if (gamepad2.y) {
+                upperClawEngaged = true;
+                lowerClawEngaged = true;
             }
             if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
                 slowMode = !slowMode;
@@ -140,18 +194,30 @@ public class TelemetryOpmode extends LinearOpMode {
                 }
             }
 
-            if (clawEngaged) {
-                robot.clawServo1.setPosition(0.540);
-                robot.clawServo2.setPosition(0.301);
+            if (lowerClawEngaged) {
+                robot.lowerLeft.setPosition(0.419);
+                robot.lowerRight.setPosition(0.491);
             }
             else {
-                robot.clawServo1.setPosition(0.202);
-                robot.clawServo2.setPosition(0.661);
+                robot.lowerLeft.setPosition(1);
+                robot.lowerRight.setPosition(0);
             }
 
-            double beltPower = gamepad2.right_stick_x;
+            if (upperClawEngaged) {
+                robot.upperLeft.setPosition(0.419);
+                robot.upperRight.setPosition(0.491);
+            }
+            else {
+                robot.upperLeft.setPosition(1);
+                robot.upperRight.setPosition(0);
+            }
 
-            robot.beltMotor.setPower(beltPower);
+            if (altClawTurned) {
+                robot.altClawTurn.setPosition(0.946);
+            }
+            else {
+                robot.altClawTurn.setPosition(0.430);
+            }
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
 

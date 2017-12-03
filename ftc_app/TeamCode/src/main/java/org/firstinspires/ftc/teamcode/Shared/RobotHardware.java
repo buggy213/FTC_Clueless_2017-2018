@@ -38,16 +38,19 @@ public class RobotHardware {
     public DcMotor linearSlidePivotMotor;
     public DcMotor linearSlideDriveMotor;
 
-    public Servo clawServo1;
-    public Servo clawServo2;
-
     public Servo phoneServo1;
     public Servo phoneServo2;
 
     public Servo jewelArm1;
     public Servo jewelArm2;
 
-    public DcMotor beltMotor;
+    public Servo upperLeft;
+    public Servo upperRight;
+    public Servo lowerLeft;
+    public Servo lowerRight;
+    public Servo altClawLeft;
+    public Servo altClawRight;
+    public Servo altClawTurn;
 
     public ColorSensor left_color;
     public ColorSensor right_color;

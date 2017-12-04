@@ -114,43 +114,87 @@ public class TelemetryOpmode extends LinearOpMode {
         while (opModeIsActive()) {
             // Driving/Gamepads logic
             // region driving
-            double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
 
-            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
+            if (!gamepad1.atRest() && !gamepad2.atRest()) {
+                double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
 
-                double speed = 1;
-                if (gamepad1.right_stick_y == 0) {
-                    speed = 1.25;
+                if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
+
+                    double speed = 1;
+                    if (gamepad1.right_stick_y == 0) {
+                        speed = 1.25;
+                    }
+
+                    if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
+                        speed = 0;
+                    }
+
+                    double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
+                    drivetrain.MoveAngle(speed, angle, turn);
+                } else {
+                    drivetrain.stop();
+                }
+                //endregion
+
+                if (!previousGamepad2.a && gamepad2.a) {
+                    upperClawEngaged = !upperClawEngaged;
+                }
+                if (!previousGamepad2.b && gamepad2.b) {
+                    lowerClawEngaged = !lowerClawEngaged;
                 }
 
-                if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
-                    speed = 0;
+                if (!previousGamepad2.dpad_left && gamepad2.dpad_left) {
+                    index++;
+                    index = index % 3;
+                }
+                if (!previousGamepad2.dpad_right && gamepad2.dpad_right) {
+                    index--;
+                    if (index < 0) {
+                        index = 2;
+                    }
+                }
+                if (gamepad2.left_bumper && !previousGamepad2.left_bumper) {
+                    altClawTurned--;
+                    if (altClawTurned < 0) {
+                        altClawTurned = 2;
+                    }
+                }
+                if (gamepad2.right_bumper && !previousGamepad2.right_bumper) {
+                    altClawTurned++;
+                    altClawTurned = altClawTurned % 3;
                 }
 
-                double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
-                drivetrain.MoveAngle(speed, angle, turn);
+                if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {
+                    releaseGlyphs = !releaseGlyphs;
+                }
+
+                if (gamepad2.x) {
+                    upperClawEngaged = false;
+                    lowerClawEngaged = false;
+                }
+                if (gamepad2.y) {
+                    upperClawEngaged = true;
+                    lowerClawEngaged = true;
+                }
+                if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
+                    slowMode = !slowMode;
+                    if (slowMode) {
+                        drivetrain.setSpeedMultiplier(slowSpeed);
+                    }
+                    else {
+                        drivetrain.setSpeedMultiplier(1);
+                    }
+                }
+                double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
+
+                robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
+
+                double linearSlideDrivePower = gamepad2.left_stick_y;
+
+                robot.linearSlideDriveMotor.setPower(linearSlideDrivePower);
             }
             else {
                 drivetrain.stop();
-            }
-            //endregion
-
-            if (!previousGamepad2.a && gamepad2.a) {
-                upperClawEngaged = !upperClawEngaged;
-            }
-            if (!previousGamepad2.b && gamepad2.b) {
-                lowerClawEngaged = !lowerClawEngaged;
-            }
-
-            if (!previousGamepad2.dpad_left && gamepad2.dpad_left) {
-                index++;
-                index = index % 3;
-            }
-            if (!previousGamepad2.dpad_right && gamepad2.dpad_right) {
-                index--;
-                if (index < 0) {
-                    index = 2;
-                }
             }
             if (releaseGlyphs) {
                 if (altClawTurned == 0) {
@@ -179,39 +223,6 @@ public class TelemetryOpmode extends LinearOpMode {
                         robot.altClawLeft.setPosition(0.374);
                         robot.altClawRight.setPosition(0.555);
                         break;
-                }
-            }
-
-            if (gamepad2.left_bumper && !previousGamepad2.left_bumper) {
-                altClawTurned--;
-                if (altClawTurned < 0) {
-                    altClawTurned = 2;
-                }
-            }
-            if (gamepad2.right_bumper && !previousGamepad2.right_bumper) {
-                altClawTurned++;
-                altClawTurned = altClawTurned % 3;
-            }
-
-            if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {
-                releaseGlyphs = !releaseGlyphs;
-            }
-
-            if (gamepad2.x) {
-                upperClawEngaged = false;
-                lowerClawEngaged = false;
-            }
-            if (gamepad2.y) {
-                upperClawEngaged = true;
-                lowerClawEngaged = true;
-            }
-            if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
-                slowMode = !slowMode;
-                if (slowMode) {
-                    drivetrain.setSpeedMultiplier(slowSpeed);
-                }
-                else {
-                    drivetrain.setSpeedMultiplier(1);
                 }
             }
 
@@ -248,15 +259,6 @@ public class TelemetryOpmode extends LinearOpMode {
                     robot.altClawTurn.setPosition(1);
                     break;
             }
-
-            double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
-
-            robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
-
-            double linearSlideDrivePower = gamepad2.left_stick_y;
-
-            robot.linearSlideDriveMotor.setPower(linearSlideDrivePower);
-
             try {
                 previousGamepad1.copy(gamepad1);
                 previousGamepad2.copy(gamepad2);

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Shared;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.configuration.MotorConfiguration;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -45,39 +46,64 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    public void AutoMove(double speed, double angle, double time) throws InterruptedException{
+        MoveAngle(speed, angle, 0);
+        Thread.sleep((long)(time * 1000));
+        stop();
+    }
+
+    public void AutoMove(Direction direction, double speed, double time) throws InterruptedException{
+        MoveCardinal(direction, (float)speed);
+        Thread.sleep((long)(time * 1000));
+        stop();
+    }
+
     // "Dumb" turn, based on time
     public void turn(boolean clockwise, double speed, double seconds) throws InterruptedException{
         Rotate(clockwise, speed);
-        wait((long)(seconds * 1000));
+        Thread.sleep((long)(seconds * 1000));
         stop();
     }
 
     // Gyroscope Sensor based turn, untested
     public void GyroTurn(double speed, double angle) {
-        double x1 = cos(angle);
-        double y1 = sin(angle);
+        // Angle is counterclockwise (sorry)
+        double normalizedHeading = normalize(getHeading());
+        double normalizedAngle = normalize(angle);
+        double angleDiff = normalizedHeading - normalizedAngle;
 
-        double heading = normalize(getHeading());
-
-        double x2 = cos(heading);
-        double y2 = sin(heading);
-
-        double c = (x1 * y2) - (y1 * x2);
+        angleDiff = (angleDiff / 180) * Math.PI;
+        double c = sin(angleDiff);
         if (c >= 0) {
-            // CCW
+            // CW
             MoveAngle(0, 0, speed);
 
         }
         else if (c < 0) {
-            // CW
+            // CCW
             MoveAngle(0, 0, -speed);
         }
 
-        double lower = normalize(angle - turnThreshold);
-        double upper = normalize(angle + turnThreshold);
         while (true) {
-            heading = normalize(getHeading());
-            if (heading > lower && heading < upper) {
+            double angle1 = normalize(angle + turnThreshold);
+            double angle2 = normalize(angle - turnThreshold);
+            double target = normalize(getHeading());
+            double diff = normalize(angle2 - angle1);
+            if (diff > 180) {
+                double temp = angle1;
+                angle1 = angle2;
+                angle2 = temp;
+            }
+            boolean within = false;
+            if (angle1 <= angle2) {
+                within = target >= angle1 && target <= angle2;
+            }
+
+            else {
+                within = target >= angle1 || target <= angle2;
+            }
+
+            if (within) {
                 stop();
                 break;
             }
@@ -223,6 +249,13 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         rw.backRight.setZeroPowerBehavior(zeroPower);
         rw.backLeft.setZeroPowerBehavior(zeroPower);
     }
+    
+    public void setMotorMode(DcMotor.RunMode runMode) {
+        rw.forwardRight.setMode(runMode);
+        rw.forwardLeft.setMode(runMode);
+        rw.backRight.setMode(runMode);
+        rw.backLeft.setMode(runMode);
+    }
 
     // Sets the "overall" speed of the drivetrain
     public void setSpeedMultiplier(double speedMultiplier) {
@@ -230,12 +263,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     }
 
     double normalize(double angle) {
-        if (angle < 0) {
-            angle += 360;
-        }
-        if (angle >= 360) {
-            angle -= 360;
-        }
+        angle = (360 + angle % 360) % 360;
         return angle;
     }
 

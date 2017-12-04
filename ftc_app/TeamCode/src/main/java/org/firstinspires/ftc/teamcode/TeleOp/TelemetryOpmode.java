@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -82,7 +83,8 @@ public class TelemetryOpmode extends LinearOpMode {
     boolean upperClawEngaged = false;
     boolean lowerClawEngaged = false;
 
-    boolean altClawTurned = false;
+    int altClawTurned = 1;
+    boolean releaseGlyphs = false;
 
     boolean slowMode = true;
 
@@ -94,6 +96,7 @@ public class TelemetryOpmode extends LinearOpMode {
 
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
+        drivetrain.setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setSpeedMultiplier(slowSpeed);
 
@@ -149,31 +152,49 @@ public class TelemetryOpmode extends LinearOpMode {
                     index = 2;
                 }
             }
-
-            switch (index) {
-                case 0:
-                    // Resting
-                    robot.altClawLeft.setPosition(0.864);
-                    robot.altClawRight.setPosition(0.079);
-                    break;
-                case 1:
-                    // Ready to grab
-                    robot.altClawLeft.setPosition(0.127);
-                    robot.altClawRight.setPosition(0.839);
-                    break;
-                case 2:
-                    // Grabbing
-                    robot.altClawLeft.setPosition(0.374);
-                    robot.altClawRight.setPosition(0.555);
-                    break;
+            if (releaseGlyphs) {
+                if (altClawTurned == 0) {
+                    // Right releasing
+                    robot.altClawRight.setPosition(1);
+                }
+                if (altClawTurned == 2) {
+                    // Left releasing
+                    robot.altClawLeft.setPosition(0);
+                }
+            }
+            else {
+                switch (index) {
+                    case 0:
+                        // Resting
+                        robot.altClawLeft.setPosition(0.864);
+                        robot.altClawRight.setPosition(0.079);
+                        break;
+                    case 1:
+                        // Ready to grab
+                        robot.altClawLeft.setPosition(0.127);
+                        robot.altClawRight.setPosition(0.839);
+                        break;
+                    case 2:
+                        // Grabbing
+                        robot.altClawLeft.setPosition(0.374);
+                        robot.altClawRight.setPosition(0.555);
+                        break;
+                }
             }
 
-            if (gamepad2.dpad_up && !previousGamepad2.dpad_up) {
-                altClawTurned = !altClawTurned;
+            if (gamepad2.left_bumper && !previousGamepad2.left_bumper) {
+                altClawTurned--;
+                if (altClawTurned < 0) {
+                    altClawTurned = 2;
+                }
+            }
+            if (gamepad2.right_bumper && !previousGamepad2.right_bumper) {
+                altClawTurned++;
+                altClawTurned = altClawTurned % 3;
             }
 
             if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {
-                index = 0;
+                releaseGlyphs = !releaseGlyphs;
             }
 
             if (gamepad2.x) {
@@ -195,28 +216,37 @@ public class TelemetryOpmode extends LinearOpMode {
             }
 
             if (lowerClawEngaged) {
+                // Grabbing
                 robot.lowerLeft.setPosition(0.419);
                 robot.lowerRight.setPosition(0.491);
             }
             else {
+                // Resting
                 robot.lowerLeft.setPosition(1);
                 robot.lowerRight.setPosition(0);
             }
 
             if (upperClawEngaged) {
+                // Grabbing
                 robot.upperLeft.setPosition(0.419);
                 robot.upperRight.setPosition(0.491);
             }
             else {
+                // Resting
                 robot.upperLeft.setPosition(1);
                 robot.upperRight.setPosition(0);
             }
 
-            if (altClawTurned) {
-                robot.altClawTurn.setPosition(0.946);
-            }
-            else {
-                robot.altClawTurn.setPosition(0.430);
+            switch (altClawTurned) {
+                case 0:
+                    robot.altClawTurn.setPosition(0);
+                    break;
+                case 1:
+                    robot.altClawTurn.setPosition(0.5);
+                    break;
+                case 2:
+                    robot.altClawTurn.setPosition(1);
+                    break;
             }
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);

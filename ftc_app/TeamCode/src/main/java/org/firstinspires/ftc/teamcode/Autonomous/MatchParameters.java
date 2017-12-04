@@ -42,6 +42,6 @@ public class MatchParameters {
     }
 
     public int getInt(String key) {
-        return Integer.valueOf(parameters.get(key));
+        return Integer.valueOf(parameters.get(key).trim());
     }
 }

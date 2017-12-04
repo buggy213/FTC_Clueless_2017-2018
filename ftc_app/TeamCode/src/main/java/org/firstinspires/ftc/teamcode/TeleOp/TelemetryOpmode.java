@@ -66,7 +66,7 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
  */
 
 @TeleOp(name="TeleOp", group="Linear Opmode")
-public class TelemetryOpmode extends LinearOpMode {
+public class TelemetryOpmode extends OpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -88,12 +88,12 @@ public class TelemetryOpmode extends LinearOpMode {
 
     boolean slowMode = true;
 
+    RobotHardware robot;
+    FourWheelMecanumDrivetrain drivetrain;
     @Override
-    public void runOpMode() {
-
-        RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
-        FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
-
+    public void init() {
+        robot = RobotHardware.GetSingleton(hardwareMap);
+        drivetrain = new FourWheelMecanumDrivetrain();
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -106,12 +106,11 @@ public class TelemetryOpmode extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
         runtime.reset();
+    }
 
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
+    @Override
+    public void loop() {
             // Driving/Gamepads logic
             // region driving
 
@@ -266,16 +265,6 @@ public class TelemetryOpmode extends LinearOpMode {
             catch (RobotCoreException e) {
                 RobotLog.e("Something went wrong while copying gamepads");
             }
-            // telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
             telemetry.update();
-        }
-    }
-
-    public boolean between(double lower, double upper, double value) {
-        return (value < upper && value > lower);
-    }
-
-    double greater(double a, double b) {
-        return (a > b) ? a : b;
     }
 }

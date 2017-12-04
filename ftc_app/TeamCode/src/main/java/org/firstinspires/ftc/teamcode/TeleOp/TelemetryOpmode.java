@@ -37,7 +37,6 @@ import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -83,8 +82,7 @@ public class TelemetryOpmode extends OpMode {
     boolean upperClawEngaged = false;
     boolean lowerClawEngaged = false;
 
-    int altClawTurned = 1;
-    boolean releaseGlyphs = false;
+    boolean altClawTurned = false;
 
     boolean slowMode = true;
 
@@ -96,7 +94,6 @@ public class TelemetryOpmode extends OpMode {
         drivetrain = new FourWheelMecanumDrivetrain();
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
-        drivetrain.setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setSpeedMultiplier(slowSpeed);
 
@@ -195,68 +192,75 @@ public class TelemetryOpmode extends OpMode {
             else {
                 drivetrain.stop();
             }
-            if (releaseGlyphs) {
-                if (altClawTurned == 0) {
-                    // Right releasing
-                    robot.altClawRight.setPosition(1);
-                }
-                if (altClawTurned == 2) {
-                    // Left releasing
-                    robot.altClawLeft.setPosition(0);
-                }
-            }
-            else {
-                switch (index) {
-                    case 0:
-                        // Resting
-                        robot.altClawLeft.setPosition(0.864);
-                        robot.altClawRight.setPosition(0.079);
-                        break;
-                    case 1:
-                        // Ready to grab
-                        robot.altClawLeft.setPosition(0.127);
-                        robot.altClawRight.setPosition(0.839);
-                        break;
-                    case 2:
-                        // Grabbing
-                        robot.altClawLeft.setPosition(0.374);
-                        robot.altClawRight.setPosition(0.555);
-                        break;
-                }
+
+
+            switch (index) {
+                case 0:
+                    // Resting
+                    robot.altClawLeft.setPosition(0.864);
+                    robot.altClawRight.setPosition(0.079);
+                    break;
+                case 1:
+                    // Ready to grab
+                    robot.altClawLeft.setPosition(0.127);
+                    robot.altClawRight.setPosition(0.839);
+                    break;
+                case 2:
+                    // Grabbing
+                    robot.altClawLeft.setPosition(0.374);
+                    robot.altClawRight.setPosition(0.555);
+                    break;
             }
 
+            if (gamepad2.dpad_up && !previousGamepad2.dpad_up) {
+                altClawTurned = !altClawTurned;
+            }
+
+            if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {
+                index = 0;
+            }
+
+            if (gamepad2.x) {
+                upperClawEngaged = false;
+                lowerClawEngaged = false;
+            }
+            if (gamepad2.y) {
+                upperClawEngaged = true;
+                lowerClawEngaged = true;
+            }
+            if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
+                slowMode = !slowMode;
+                if (slowMode) {
+                    drivetrain.setSpeedMultiplier(slowSpeed);
+                }
+                else {
+                    drivetrain.setSpeedMultiplier(1);
+                }
+            }
+        
             if (lowerClawEngaged) {
-                // Grabbing
                 robot.lowerLeft.setPosition(0.419);
                 robot.lowerRight.setPosition(0.491);
             }
             else {
-                // Resting
                 robot.lowerLeft.setPosition(1);
                 robot.lowerRight.setPosition(0);
             }
 
             if (upperClawEngaged) {
-                // Grabbing
                 robot.upperLeft.setPosition(0.419);
                 robot.upperRight.setPosition(0.491);
             }
             else {
-                // Resting
                 robot.upperLeft.setPosition(1);
                 robot.upperRight.setPosition(0);
             }
 
-            switch (altClawTurned) {
-                case 0:
-                    robot.altClawTurn.setPosition(0);
-                    break;
-                case 1:
-                    robot.altClawTurn.setPosition(0.5);
-                    break;
-                case 2:
-                    robot.altClawTurn.setPosition(1);
-                    break;
+            if (altClawTurned) {
+                robot.altClawTurn.setPosition(0.946);
+            }
+            else {
+                robot.altClawTurn.setPosition(0.430);
             }
             try {
                 previousGamepad1.copy(gamepad1);

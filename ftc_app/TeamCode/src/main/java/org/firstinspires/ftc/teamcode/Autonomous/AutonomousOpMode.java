@@ -29,14 +29,10 @@
 
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import com.qualcomm.hardware.adafruit.AdafruitI2cColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -89,19 +85,11 @@ public class AutonomousOpMode extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException{
 
-        drivetrain = new FourWheelMecanumDrivetrain();
-        drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
-        drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        hw.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
 
-        // MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
-        if (hw.imu == null) {
-            hw.ReinitializeIMU();
-        }
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
 
-
+        drivetrain = new FourWheelMecanumDrivetrain();
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -128,59 +116,56 @@ public class AutonomousOpMode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            String mode =  "BLUE_CLOSE"; //parameters.get("start");
+            String mode = parameters.get("start");
             boolean close = mode.contains("CLOSE");
             boolean red = mode.contains("RED");
 
             if (red) {
                 jewelArms(false);
-                Thread.sleep(2000);
+                wait(300);
                 int redVal = hw.right_color.red();
                 int blue = hw.right_color.blue();
                 boolean detectRed;
-                detectRed = redVal > blue;
+                boolean detectBlue;
+                detectRed = redVal > parameters.getInt("red_threshold");
 
-                if (detectRed) {
-                    drivetrain.AutoMove(Direction.BACKWARD, 0.2, 0.5);
+                detectBlue = blue > parameters.getInt("blue_threshold");
+
+                if (detectBlue && !detectRed) {
+                    drivetrain.turn(true, 0.2, 0.5);
+                }
+                else if (detectRed && !detectBlue) {
+                    drivetrain.turn(false, 0.2, 0.5);
                 }
                 else {
-                    drivetrain.AutoMove(Direction.FORWARD, 0.2, 0.5);
+                    // Well fuck. Guess you just keep going?
                 }
             }
             else {
                 jewelArms(true);
-                Thread.sleep(2500);
-                int redVal = hw.left_color.red();
-                int blue = hw.left_color.blue();
+                wait(300);
+                int redVal = hw.right_color.red();
+                int blue = hw.right_color.blue();
                 boolean detectRed;
+                boolean detectBlue;
+                detectRed = redVal > parameters.getInt("red_threshold");
 
-                detectRed = redVal > blue;
-                RobotLog.i("USER Red value" + redVal);
-                RobotLog.i("USER Blue value" + blue);
-                RobotLog.i("USER Red detected" + detectRed);
-                if (detectRed) {
-                    drivetrain.AutoMove(Direction.FORWARD, 0.2, 1);
+                detectBlue = blue > parameters.getInt("blue_threshold");
+
+                if (detectBlue && !detectRed) {
+                    drivetrain.turn(false, 0.2, 0.5);
+                }
+                else if (detectRed && !detectBlue) {
+                    drivetrain.turn(true, 0.2, 0.5);
                 }
                 else {
-                    drivetrain.AutoMove(Direction.BACKWARD, 0.2, 0.5);
-                    drivetrain.AutoMove(Direction.FORWARD, 0.5, 2.5);
+                    // Well fuck. Guess you just keep going?
                 }
             }
 
-            resetJewelArms();
-            if (close) {
-                if (red) {
-                    // Angle is counterclockwise
-                    drivetrain.GyroTurn(0.2, -90);
-                }
-                else {
-                    drivetrain.GyroTurn(0.2, 90);
-                }
-            }
-            else {
+            drivetrain.GyroTurn(0.2, 0);
+            drivetrain.AutoMove(0.5, 0, 5000);
 
-            }
-            /*
             if (close) {
                 if (red) {
                     drivetrain.GyroTurn(0.2, 90);
@@ -198,11 +183,12 @@ public class AutonomousOpMode extends LinearOpMode {
                 else {
                     moveCrypto(true);
                 }
-            } */
-            requestOpModeStop();
-        }
-        hw.imu.stopAccelerationIntegration();
+            }
 
+            hw.imu.stopAccelerationIntegration();
+
+            idle();
+        }
     }
 
     public void moveCrypto(boolean fromLeft) {
@@ -215,16 +201,20 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
+
+
+    // TODO add proper servo values
+
     private void jewelArms(boolean left) {
         if (left) {
-            hw.jewelArm1.setPosition(0.60);
+            hw.jewelArm1.setPosition(0);
         } else {
-            hw.jewelArm2.setPosition(0.40);
+            hw.jewelArm2.setPosition(0);
         }
     }
     private void resetJewelArms() {
-        hw.jewelArm1.setPosition(0.033);
-        hw.jewelArm2.setPosition(1);
+        hw.jewelArm1.setPosition(0);
+        hw.jewelArm2.setPosition(0);
     }
 
     private void prestart() {

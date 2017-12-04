@@ -84,6 +84,7 @@ public class TelemetryOpmode extends OpMode {
 
     boolean altClawTurned = false;
 
+    boolean releaseGlyphs;
     boolean slowMode = true;
 
     RobotHardware robot;
@@ -150,14 +151,7 @@ public class TelemetryOpmode extends OpMode {
                     }
                 }
                 if (gamepad2.left_bumper && !previousGamepad2.left_bumper) {
-                    altClawTurned--;
-                    if (altClawTurned < 0) {
-                        altClawTurned = 2;
-                    }
-                }
-                if (gamepad2.right_bumper && !previousGamepad2.right_bumper) {
-                    altClawTurned++;
-                    altClawTurned = altClawTurned % 3;
+                    altClawTurned = !altClawTurned;
                 }
 
                 if (gamepad2.dpad_down && !previousGamepad2.dpad_down) {

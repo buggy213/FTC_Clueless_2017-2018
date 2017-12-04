@@ -191,6 +191,8 @@ public class TelemetryOpmode extends OpMode {
             }
             else {
                 drivetrain.stop();
+                robot.linearSlidePivotMotor.setPower(0);
+                robot.linearSlideDriveMotor.setPower(0);
             }
 
 

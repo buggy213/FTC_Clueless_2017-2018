@@ -115,7 +115,7 @@ public class TelemetryOpmode extends LinearOpMode {
             // Driving/Gamepads logic
             // region driving
 
-            if (!gamepad1.atRest() && !gamepad2.atRest()) {
+            if (!gamepad1.atRest() || !gamepad2.atRest()) {
                 double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
 
                 if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {

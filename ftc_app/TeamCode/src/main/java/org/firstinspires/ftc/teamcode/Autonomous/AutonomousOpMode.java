@@ -29,10 +29,14 @@
 
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import com.qualcomm.hardware.adafruit.AdafruitI2cColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -85,11 +89,20 @@ public class AutonomousOpMode extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException{
 
-        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
-
-        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 50);
-
         drivetrain = new FourWheelMecanumDrivetrain();
+        hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        hw.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
+        drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        hw.phoneServo1.setPosition(0.04);
+        // MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
+        if (hw.imu == null) {
+            hw.ReinitializeIMU();
+        }
+        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
+
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -110,111 +123,176 @@ public class AutonomousOpMode extends LinearOpMode {
         relicTrackables.activate();
         //endregion
 
+        Runnable motorLift = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(150);
+                    hw.linearSlideDriveMotor.setPower(0.5);
+                    Thread.sleep(1500);
+                    hw.linearSlideDriveMotor.setPower(0);
+                }
+                catch (InterruptedException e) {
+
+                }
+            }
+        };
+        Runnable motorDrop = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    hw.linearSlideDriveMotor.setPower(-0.5);
+                    Thread.sleep(500);
+                    hw.linearSlideDriveMotor.setPower(0);
+                }
+                catch (InterruptedException e) {
+
+                }
+            }
+        };
+
+        Thread liftGlyph = new Thread(motorLift);
+        Thread dropGlpyh = new Thread(motorDrop);
+
         // Wait for the game to start (driver presses PLAY)
         this.waitForStart();
         runtime.reset();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            String mode = parameters.get("start");
+            String mode =  "BLUE_CLOSE"; //parameters.get("start");
             boolean close = mode.contains("CLOSE");
             boolean red = mode.contains("RED");
 
+            grab();
+            liftGlyph.start();
+            hw.altClawTurn.setPosition(0.5);  // center
+
             if (red) {
                 jewelArms(false);
-                wait(300);
+                Thread.sleep(2000);
                 int redVal = hw.right_color.red();
                 int blue = hw.right_color.blue();
                 boolean detectRed;
-                boolean detectBlue;
-                detectRed = redVal > parameters.getInt("red_threshold");
+                detectRed = redVal > blue;
 
-                detectBlue = blue > parameters.getInt("blue_threshold");
-
-                if (detectBlue && !detectRed) {
-                    drivetrain.turn(true, 0.2, 0.5);
-                }
-                else if (detectRed && !detectBlue) {
-                    drivetrain.turn(false, 0.2, 0.5);
+                if (detectRed) {
+                    drivetrain.AutoMove(Direction.BACKWARD, 0.2, 0.5);
                 }
                 else {
-                    // Well fuck. Guess you just keep going?
+                    drivetrain.AutoMove(Direction.FORWARD, 0.2, 0.5);
                 }
             }
             else {
+                AutoMove(0.2, 0, 60);
+                Thread.sleep(1000);
                 jewelArms(true);
-                wait(300);
-                int redVal = hw.right_color.red();
-                int blue = hw.right_color.blue();
+                Thread.sleep(2500);
+                int redVal = hw.left_color.red();
+                int blue = hw.left_color.blue();
                 boolean detectRed;
-                boolean detectBlue;
-                detectRed = redVal > parameters.getInt("red_threshold");
-
-                detectBlue = blue > parameters.getInt("blue_threshold");
-
-                if (detectBlue && !detectRed) {
-                    drivetrain.turn(false, 0.2, 0.5);
-                }
-                else if (detectRed && !detectBlue) {
-                    drivetrain.turn(true, 0.2, 0.5);
+                detectRed = redVal > blue;
+                RobotLog.i("USER Red value" + redVal);
+                RobotLog.i("USER Blue value" + blue);
+                RobotLog.i("USER Red detected" + detectRed);
+                if (detectRed) {
+                    AutoMove(0.2, 0, 90);
+                    resetJewelArms();
+                    Thread.sleep(600);
+                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
+                        AutoMove(0.2, 0, 1000);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
+                        AutoMove(0.2, 0, 1350);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
+                        AutoMove(0.2, 0, 1600);
+                    }
                 }
                 else {
-                    // Well fuck. Guess you just keep going?
+                    AutoMove(-0.2, 0, 90);
+                    resetJewelArms();
+                    Thread.sleep(600);
+                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
+                        AutoMove(0.2, 0, 1350);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
+                        AutoMove(0.2, 0, 1700);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
+                        AutoMove(0.2, 0, 2050);
+                    }
                 }
             }
-
-            drivetrain.GyroTurn(0.2, 0);
-            drivetrain.AutoMove(0.5, 0, 5000);
 
             if (close) {
                 if (red) {
-                    drivetrain.GyroTurn(0.2, 90);
-                    moveCrypto(false);
+                    // Angle is counterclockwise
+                    drivetrain.GyroTurn(0.15, -83);
                 }
                 else {
-                    drivetrain.GyroTurn(0.2, -90);
-                    moveCrypto(true);
+                    drivetrain.GyroTurn(0.15, 90);
                 }
             }
             else {
-                if(red) {
-                    moveCrypto(false);
-                }
-                else {
-                    moveCrypto(true);
-                }
+
             }
 
-            hw.imu.stopAccelerationIntegration();
+            dropGlpyh.start();
+            drivetrain.AutoMove(0.2, 0, 1.5);
+            AutoMove(-0.2, 0, 50);
+            release();
+            AutoMove(-0.2, 0, 150);
+            /*if (close) {
+                AutoMove(-0.2, 0, 300);
+                drivetrain.OneEighty(90, 0.2);
+            }*/
 
-            idle();
+
+            requestOpModeStop();
+        }
+        hw.imu.stopAccelerationIntegration();
+
+    }
+
+    public void AutoMove(double speed, double angle, int counts) {
+        int initialForward = hw.forwardLeft.getCurrentPosition();
+        int initialBackward = hw.backLeft.getCurrentPosition();
+
+        drivetrain.MoveAngle(speed, angle, 0);
+
+        while (opModeIsActive()) {
+            int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
+            telemetry.addData("d1", differenceForward);
+            telemetry.addData("d2", differenceBackward);
+            telemetry.update();
+            if ((differenceBackward + differenceForward) / 2 > counts) {
+                drivetrain.stop();
+                break;
+            }
         }
     }
 
-    public void moveCrypto(boolean fromLeft) {
-        int index = 0;
-        while (true) {
-            drivetrain.MoveCardinal(fromLeft ? Direction.RIGHT : Direction.LEFT, 0.4f);
-            if (hw.sensorDistance.getDistance(DistanceUnit.CM) < distanceThreshold) {
-                index++;
-            }
-        }
+    private void grab() {
+        hw.altClawLeft.setPosition(0.610);
+        hw.altClawRight.setPosition(0.276);
     }
-
-
-
-    // TODO add proper servo values
+    private void release() {
+        hw.altClawLeft.setPosition(0.225);
+        hw.altClawRight.setPosition(0.727);
+    }
 
     private void jewelArms(boolean left) {
         if (left) {
-            hw.jewelArm1.setPosition(0);
+            hw.jewelArm1.setPosition(0.479);
         } else {
-            hw.jewelArm2.setPosition(0);
+            hw.jewelArm2.setPosition(0.446);
         }
     }
     private void resetJewelArms() {
         hw.jewelArm1.setPosition(0);
-        hw.jewelArm2.setPosition(0);
+        hw.jewelArm2.setPosition(1);
     }
 
     private void prestart() {

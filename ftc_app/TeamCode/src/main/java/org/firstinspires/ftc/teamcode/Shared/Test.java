@@ -25,13 +25,13 @@ public class Test extends OpMode {
     double previousTime;
 
     double servoPos1 = 0.5;
-    double servoPos2;
+    double servoPos2 = 0.5;
 
     @Override
     public void init() {
         timer = new ElapsedTime();
-        leftClaw = hardwareMap.servo.get("altClawTurn");
-        rightClaw = hardwareMap.servo.get("altClawRight");
+        leftClaw = hardwareMap.servo.get("phoneServo1");
+        rightClaw = hardwareMap.servo.get("phoneServo2");
         leftColor = hardwareMap.colorSensor.get("left_color");
         rightColor = hardwareMap.colorSensor.get("right_color");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "sensorDistance");
@@ -44,10 +44,6 @@ public class Test extends OpMode {
 
         leftClaw.setPosition(servoPos1);
         rightClaw.setPosition(servoPos2);
-
-        telemetry.addData("Distance", distanceSensor.getDistance(DistanceUnit.CM));
-        telemetry.addData("Left Color Sensor", "R-" + leftColor.red() + " G-" + leftColor.green() + " B-" + leftColor.blue());
-        telemetry.addData("Right Color Sensor", "R-" + rightColor.red() + " G-" + rightColor.green() + " B-" + rightColor.blue());
         telemetry.addData("Servo 1", servoPos1);
         telemetry.addData("Servo 2", servoPos2);
         telemetry.update();

@@ -23,7 +23,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     double speedMultiplier = 0.75;
 
     // Constants used to adjust various parameters / characteristics of the drivetrain
-    final double rotSpeed = 0.5;
+    final double rotSpeed = 0.75;
     final double speedThreshold = 0.05;
     final double turnThreshold = 2;
 
@@ -238,10 +238,11 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         double intermediateSin = sin(desiredAngle);
         double intermediateCos = cos(desiredAngle);
 
-        double leftForward = speed * (intermediateSin) + vRot;
-        double leftBackward = speed * (intermediateCos) + vRot;
-        double rightForward = speed * (intermediateCos) - vRot;
-        double rightBackward = speed * (intermediateSin) - vRot;
+
+        double leftForward = speed * (intermediateSin) + (vRot * rotSpeed / speedMultiplier);
+        double leftBackward = speed * (intermediateCos) + (vRot * rotSpeed / speedMultiplier);
+        double rightForward = speed * (intermediateCos) - (vRot * rotSpeed / speedMultiplier);
+        double rightBackward = speed * (intermediateSin) - (vRot * rotSpeed / speedMultiplier);
 
         if (Math.abs(rightBackward) < speedThreshold) {
             rightBackward = 0;

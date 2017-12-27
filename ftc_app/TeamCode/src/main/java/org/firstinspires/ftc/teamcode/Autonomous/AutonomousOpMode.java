@@ -50,6 +50,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
+import org.opencv.core.Mat;
 
 
 /**
@@ -57,15 +58,15 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
  * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
  * class is instantiated on the Robot Controller and executed.
- *
+ * <p>
  * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
  * It includes all the skeletal structure that all linear OpModes contain.
- *
+ * <p>
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Autonomous", group="Linear Opmode")
+@Autonomous(name = "Autonomous", group = "Linear Opmode")
 public class AutonomousOpMode extends LinearOpMode {
 
     // Declare OpMode members.
@@ -87,8 +88,8 @@ public class AutonomousOpMode extends LinearOpMode {
     double distanceThreshold;
 
     @Override
-    public void runOpMode() throws InterruptedException{
-
+    public void runOpMode() throws InterruptedException {
+        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
         drivetrain = new FourWheelMecanumDrivetrain();
         hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -131,8 +132,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     hw.linearSlideDriveMotor.setPower(0.5);
                     Thread.sleep(1500);
                     hw.linearSlideDriveMotor.setPower(0);
-                }
-                catch (InterruptedException e) {
+                } catch (InterruptedException e) {
 
                 }
             }
@@ -144,8 +144,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     hw.linearSlideDriveMotor.setPower(-0.5);
                     Thread.sleep(500);
                     hw.linearSlideDriveMotor.setPower(0);
-                }
-                catch (InterruptedException e) {
+                } catch (InterruptedException e) {
 
                 }
             }
@@ -154,13 +153,15 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread liftGlyph = new Thread(motorLift);
         Thread dropGlpyh = new Thread(motorDrop);
 
+        hw.right_color.enableLed(true);
+
         // Wait for the game to start (driver presses PLAY)
         this.waitForStart();
         runtime.reset();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            String mode =  "BLUE_CLOSE"; //parameters.get("start");
+            String mode = parameters.get("start");
             boolean close = mode.contains("CLOSE");
             boolean red = mode.contains("RED");
 
@@ -169,22 +170,50 @@ public class AutonomousOpMode extends LinearOpMode {
             hw.altClawTurn.setPosition(0.5);  // center
 
             if (red) {
+                AutoMove(0.2, 0, 65);
+                Thread.sleep(1000);
                 jewelArms(false);
-                Thread.sleep(2000);
+                Thread.sleep(2500);
                 int redVal = hw.right_color.red();
                 int blue = hw.right_color.blue();
                 boolean detectRed;
                 detectRed = redVal > blue;
 
                 if (detectRed) {
-                    drivetrain.AutoMove(Direction.BACKWARD, 0.2, 0.5);
+                    AutoMove(-0.2, 0, 90);
+                    resetJewelArms();
+                    Thread.sleep(600);
+                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
+                        AutoMove(0.2, 0, 1350);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
+                        AutoMove(0.2, 0, 1700);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
+                        AutoMove(0.2, 0, 2050);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
+                        AutoMove(0.2, 0, 1700);
+                    }
+                } else {
+                    AutoMove(0.2, 0, 90);
+                    resetJewelArms();
+                    Thread.sleep(600);
+                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
+                        AutoMove(0.2, 0, 1000);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
+                        AutoMove(0.2, 0, 1350);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
+                        AutoMove(0.2, 0, 1600);
+                    }
+                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
+                        AutoMove(0.2, 0, 1350);
+                    }
                 }
-                else {
-                    drivetrain.AutoMove(Direction.FORWARD, 0.2, 0.5);
-                }
-            }
-            else {
-                AutoMove(0.2, 0, 60);
+            } else {
+                AutoMove(0.2, 0, 65);
                 Thread.sleep(1000);
                 jewelArms(true);
                 Thread.sleep(2500);
@@ -208,8 +237,10 @@ public class AutonomousOpMode extends LinearOpMode {
                     if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
                         AutoMove(0.2, 0, 1600);
                     }
-                }
-                else {
+                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
+                        AutoMove(0.2, 0, 1350);
+                    }
+                } else {
                     AutoMove(-0.2, 0, 90);
                     resetJewelArms();
                     Thread.sleep(600);
@@ -222,19 +253,19 @@ public class AutonomousOpMode extends LinearOpMode {
                     if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
                         AutoMove(0.2, 0, 2050);
                     }
+                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
+                        AutoMove(0.2, 0, 1700);
+                    }
                 }
             }
-
             if (close) {
                 if (red) {
                     // Angle is counterclockwise
-                    drivetrain.GyroTurn(0.15, -83);
+                    drivetrain.GyroTurn(0.15, -88.5);
+                } else {
+                    drivetrain.GyroTurn(0.15, 88.5);
                 }
-                else {
-                    drivetrain.GyroTurn(0.15, 90);
-                }
-            }
-            else {
+            } else {
 
             }
 
@@ -243,6 +274,7 @@ public class AutonomousOpMode extends LinearOpMode {
             AutoMove(-0.2, 0, 50);
             release();
             AutoMove(-0.2, 0, 150);
+
             /*if (close) {
                 AutoMove(-0.2, 0, 300);
                 drivetrain.OneEighty(90, 0.2);
@@ -278,6 +310,7 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.altClawLeft.setPosition(0.610);
         hw.altClawRight.setPosition(0.276);
     }
+
     private void release() {
         hw.altClawLeft.setPosition(0.225);
         hw.altClawRight.setPosition(0.727);
@@ -290,6 +323,7 @@ public class AutonomousOpMode extends LinearOpMode {
             hw.jewelArm2.setPosition(0.446);
         }
     }
+
     private void resetJewelArms() {
         hw.jewelArm1.setPosition(0);
         hw.jewelArm2.setPosition(1);
@@ -300,8 +334,7 @@ public class AutonomousOpMode extends LinearOpMode {
         if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
             telemetry.addData("VuMark", "%s visible", vuMark);
             lastKnownVumark = vuMark;
-        }
-        else {
+        } else {
             telemetry.addData("VuMark", "not visible");
         }
 

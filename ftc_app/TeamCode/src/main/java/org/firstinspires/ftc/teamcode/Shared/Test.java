@@ -30,17 +30,17 @@ public class Test extends OpMode {
     @Override
     public void init() {
         timer = new ElapsedTime();
-        leftClaw = hardwareMap.servo.get("phoneServo1");
-        rightClaw = hardwareMap.servo.get("phoneServo2");
+        leftClaw = hardwareMap.servo.get("altClawLeft");
+        rightClaw = hardwareMap.servo.get("altClawRight");
         leftColor = hardwareMap.colorSensor.get("left_color");
         rightColor = hardwareMap.colorSensor.get("right_color");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "sensorDistance");
     }
     @Override
     public void loop() {
-        double deltaTime = (timer.milliseconds() - previousTime) / 20;
-        servoPos1 += 0.2 * deltaTime * gamepad1.left_stick_y;
-        servoPos2 += 0.2 * deltaTime * gamepad1.right_stick_y;
+        double deltaTime = (timer.milliseconds() - previousTime) / 40;
+        servoPos1 += 0.05 * deltaTime * gamepad1.left_stick_y;
+        servoPos2 += 0.05 * deltaTime * gamepad1.right_stick_y;
 
         leftClaw.setPosition(servoPos1);
         rightClaw.setPosition(servoPos2);

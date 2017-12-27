@@ -117,7 +117,7 @@ public class TelemetryOpmode extends LinearOpMode {
         while (opModeIsActive()) {
             // Driving Gamepads logic
             // region driving
-            double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * turnSpeed;
+            double turn = (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
 
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
 
@@ -137,7 +137,7 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             //endregion
 
-            if (gamepad2.dpad_right) {
+             if (gamepad2.dpad_right) {
                 altClawPosition = 0;  // resting
             }
             if (gamepad2.dpad_left) {
@@ -150,48 +150,49 @@ public class TelemetryOpmode extends LinearOpMode {
                 altClawPosition = 3;
             }
             if (gamepad2.a) {
-                altClawPosition = 4;
+                altClawPosition = 4; // slight open
             }
             if (gamepad2.b) {
-                upperClawEngaged = 2 ;
+                upperClawEngaged = 2 ;  // slight open
             }
 
             switch (altClawPosition) {
-                case 0:
-                    // Resting
-                    robot.altClawLeft.setPosition(0.865);
-                    robot.altClawRight.setPosition(0.073);
+                case 0: // Resting
+                    robot.altClawLeft.setPosition(0.85);
+                    robot.altClawRight.setPosition(0.00);
                     break;
-                case 1:
+                case 1:  // open altClaw
                     if (altClawTurned == 1) {  // center
                         // Ready to grab
-                        robot.altClawLeft.setPosition(0.225);
-                        robot.altClawRight.setPosition(0.727);
+                        robot.altClawLeft.setPosition(0.300);  // 0.225
+                        robot.altClawRight.setPosition(0.500);  // 0.727
                     }
                     // releasing left or right altClaw depending on the turn position
                     else if (altClawTurned == 0) {
                         // Right releasing
-                        robot.altClawRight.setPosition(1); // 0.94
+                        robot.altClawLeft.setPosition(0.496);
+                        robot.altClawRight.setPosition(0.662); // 0.94
                     }
                     else if (altClawTurned == 2) {
                         // Left releasing
-                        robot.altClawLeft.setPosition(0);  // 0.02
+                        robot.altClawLeft.setPosition(0.163);  // 0.02
+                        robot.altClawRight.setPosition(0.325);
                     }
                     break;
                 case 2:
                     // Grabbing two glyphs
-                    robot.altClawLeft.setPosition(0.36);  //0.346
-                    robot.altClawRight.setPosition(0.553); //0.567
+                    robot.altClawLeft.setPosition(0.496);  //0.346
+                    robot.altClawRight.setPosition(0.325); //0.567
                     break;
                 case 3:
                     // Grabbing one glyphs
-                    robot.altClawLeft.setPosition(0.610);
-                    robot.altClawRight.setPosition(0.276);
+                    robot.altClawLeft.setPosition(0.652);  //0.610
+                    robot.altClawRight.setPosition(0.227);  //0.276
                     break;
-                case 4:
+                case 4:  // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
-                    robot.altClawLeft.setPosition(0.550);
-                    robot.altClawRight.setPosition(0.336);
+                    robot.altClawLeft.setPosition(0.600); //0.550
+                    robot.altClawRight.setPosition(0.300); //0.336
                     break;
             }
 
@@ -237,10 +238,10 @@ public class TelemetryOpmode extends LinearOpMode {
                     break;
                 case 1:
                     // Grabbing
-                    robot.upperLeft.setPosition(0.903);
-                    robot.upperRight.setPosition(0.078);
+                    robot.upperLeft.setPosition(0.943);  //0.903
+                    robot.upperRight.setPosition(0.038); //0.078
                     break;
-                case 2:
+                case 2:  // slight open
                     robot.upperLeft.setPosition(0.85);
                     robot.upperRight.setPosition(0.128);
                     break;

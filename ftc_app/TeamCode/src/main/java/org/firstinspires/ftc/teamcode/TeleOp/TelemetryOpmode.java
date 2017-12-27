@@ -84,6 +84,7 @@ public class TelemetryOpmode extends LinearOpMode {
     int altClawTurned = 1;
     int altClawPosition = 1;
 
+    boolean releaseGlyphs;
     boolean slowMode = true;
 
     @Override
@@ -136,6 +137,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 drivetrain.stop();
             }
             //endregion
+
 
              if (gamepad2.dpad_right) {
                 altClawPosition = 0;  // resting

@@ -55,6 +55,15 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setMotorMode(runMode);
     }
+    public boolean anyIsBusy() {
+        return rw.backLeft.isBusy() || rw.backRight.isBusy() || rw.forwardLeft.isBusy() || rw.forwardRight.isBusy();
+    }
+    public void setPowerAll(double power) {
+        rw.backLeft.setPower(power);
+        rw.backRight.setPower(power);
+        rw.forwardLeft.setPower(power);
+        rw.forwardRight.setPower(power);
+    }
 
     // Gyroscope Sensor based turn, untested
     public void GyroTurn(double speed, double angle) {

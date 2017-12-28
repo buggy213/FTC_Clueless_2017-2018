@@ -33,6 +33,10 @@ public class MatchParameters {
         return mp;
     }
 
+    public static MatchParameters loadParametersFromDefaultLocation() {
+        return  null;
+    }
+
     public void put(String key, String value) {
         parameters.put(key, value);
     }

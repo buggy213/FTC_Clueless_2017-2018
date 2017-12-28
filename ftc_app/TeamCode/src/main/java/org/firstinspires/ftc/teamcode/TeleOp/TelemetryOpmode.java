@@ -161,7 +161,7 @@ public class TelemetryOpmode extends LinearOpMode {
             switch (altClawPosition) {
                 case 0: // Resting
                     robot.altClawLeft.setPosition(0.85);
-                    robot.altClawRight.setPosition(0.00);
+                    robot.altClawRight.setPosition(0.15);
                     break;
                 case 1:  // open altClaw
                     if (altClawTurned == 1) {  // center
@@ -208,6 +208,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 robot.upperRight.setPosition(0.554);
                 upperClawEngaged = 0;
                 //wait(200);
+
 
                 robot.altClawTurn.setPosition(0); // left turn
                 altClawTurned = 0;  // left turn

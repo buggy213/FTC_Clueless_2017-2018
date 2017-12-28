@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -54,8 +55,8 @@ public class RobotHardware {
 
     public ColorSensor left_color;
     public ColorSensor right_color;
+    public ColorSensor bottom_color;
 
-    public DistanceSensor sensorDistance;
     public BNO055IMU imu;
 
     // Initializes the BNO055 IMU built into the REV Expansion Hub

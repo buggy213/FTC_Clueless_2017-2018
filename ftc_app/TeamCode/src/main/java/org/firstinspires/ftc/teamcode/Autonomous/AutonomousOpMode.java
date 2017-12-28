@@ -50,6 +50,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
+import org.firstinspires.ftc.teamcode.Shared.VL53L0X;
 import org.opencv.core.Mat;
 
 
@@ -73,7 +74,7 @@ public class AutonomousOpMode extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     // Used to access robot hardware
-    RobotHardware hw = RobotHardware.GetSingleton(hardwareMap);
+    RobotHardware hw;
 
     FourWheelMecanumDrivetrain drivetrain;
 
@@ -89,7 +90,8 @@ public class AutonomousOpMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
+        hw = RobotHardware.GetSingleton(hardwareMap);
+        // Match     parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
         drivetrain = new FourWheelMecanumDrivetrain();
         hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -154,11 +156,13 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread dropGlpyh = new Thread(motorDrop);
 
         hw.right_color.enableLed(true);
-
+        // telemetry.addData("Blue", parameters.getInt("blue_threshold"));
         // Wait for the game to start (driver presses PLAY)
         this.waitForStart();
         runtime.reset();
-
+        lightCrypto(0, 0.1, 0.0003, Direction.RIGHT);
+        //crypto(2, 0.08, 0.0003, Direction.RIGHT);
+        /*
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             String mode = parameters.get("start");
@@ -281,8 +285,9 @@ public class AutonomousOpMode extends LinearOpMode {
             }*/
 
 
-            requestOpModeStop();
-        }
+            /*requestOpModeStop();
+        }*/
+
         hw.imu.stopAccelerationIntegration();
 
     }
@@ -310,6 +315,197 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.altClawLeft.setPosition(0.610);
         hw.altClawRight.setPosition(0.276);
     }
+    
+    class Encoders {
+        int backLeft;
+        int backRight;
+        int forwardLeft;
+        int forwardRight;
+        
+        public Encoders() {
+            
+        }
+        public Encoders(RobotHardware robot) {
+            this.backLeft = robot.backLeft.getCurrentPosition();
+            this.backRight = robot.backRight.getCurrentPosition();
+            this.forwardLeft = robot.forwardLeft.getCurrentPosition();
+            this.forwardRight = robot.forwardRight.getCurrentPosition();
+        }
+        
+        public void set(FourWheelMecanumDrivetrain dt, RobotHardware hw) {
+            dt.setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+            hw.backLeft.setTargetPosition(backLeft);
+            hw.backRight.setTargetPosition(backRight);
+            hw.forwardLeft.setTargetPosition(forwardLeft);
+            hw.forwardRight.setTargetPosition(forwardRight);
+        }
+        
+        public Encoders average(Encoders other) {
+            Encoders e = new Encoders();
+            e.backLeft = (this.backLeft + other.backLeft) / 2;
+            e.backRight = (this.backRight + other.backRight) / 2;
+            e.forwardLeft = (this.forwardLeft + other.forwardLeft) / 2;
+            e.forwardRight = (this.forwardRight + other.forwardRight) / 2;
+            return e;
+        }
+
+        public void compensate(RobotHardware hw, double speed, Encoders target, Direction direction, double p) {
+            if (direction == Direction.LEFT) {
+                double backLeftComp = () * p;
+                double backRightComp = (avg - backRightDiff) * p;
+                double forwardLeftComp = (avg - forwardLeftDiff) * p;
+                double forwardRightComp = (avg - forwardRightDiff) * p;
+            }
+            else {
+
+            }
+        }
+    }
+
+    private Direction opposite(Direction input) {
+        if (input == Direction.BACKWARD) {
+            return Direction.FORWARD;
+        }
+        if (input == Direction.FORWARD) {
+            return Direction.BACKWARD;
+        }
+        if (input == Direction.LEFT) {
+            return Direction.RIGHT;
+        }
+        if (input == Direction.RIGHT) {
+            return Direction.LEFT;
+        }
+    }
+
+    private void lightCrypto(double blueThreshold, double speed, double p, Direction direction) {
+        int backLeftStart = hw.backLeft.getCurrentPosition();
+        int backRightStart = hw.backRight.getCurrentPosition();
+        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
+        int forwardRightStart = hw.forwardRight.getCurrentPosition();
+        int count = 0;
+        double firstTime = 0;
+        int offset = 100;
+        
+        Encoders first = null;
+        Encoders second = null;
+        Encoders middle = null;
+        while (opModeIsActive()) {
+            double timeElapsed = runtime.milliseconds() - firstTime;
+            if (hw.bottom_color.blue() > (hw.bottom_color.red() * 2) && (timeElapsed > 2500 || count == 0)) {
+
+                first = new Encoders(hw);
+                while (opModeIsActive() && hw.bottom_color.blue() > (hw.bottom_color.red() * 2)) {
+
+                }
+
+                while (opModeIsActive() && !(hw.bottom_color.blue() > (hw.bottom_color.red() * 2))){
+
+                }
+                second = new Encoders(hw);
+                middle = first.average(second);
+                drivetrain.setPowerAll(speed);
+                break;
+
+            }
+
+            int backLeft = hw.backLeft.getCurrentPosition();
+            int backRight = hw.backRight.getCurrentPosition();
+            int forwardLeft = hw.forwardLeft.getCurrentPosition();
+            int forwardRight = hw.forwardRight.getCurrentPosition();
+
+            int backLeftDiff = Math.abs(backLeft - backLeftStart);
+            int backRightDiff = Math.abs(backRight - backRightStart);
+            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
+            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
+
+            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+            double backLeftComp = (avg - backLeftDiff) * p;
+            double backRightComp = (avg - backRightDiff) * p;
+            double forwardLeftComp = (avg - forwardLeftDiff) * p;
+            double forwardRightComp = (avg - forwardRightDiff) * p;
+
+            switch (direction) {
+                case LEFT:
+                    hw.forwardRight.setPower(speed + forwardRightComp);
+                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
+                    hw.backRight.setPower(-speed - backRightComp);
+                    hw.backLeft.setPower(speed + backLeftComp);
+                    break;
+                case RIGHT:
+                    hw.forwardRight.setPower(-speed - forwardRightComp);
+                    hw.forwardLeft.setPower(speed + forwardLeftComp);
+                    hw.backRight.setPower(speed + backRightComp);
+                    hw.backLeft.setPower(-speed - backLeftComp);
+                    break;
+
+            }
+        }
+        double start = runtime.milliseconds();
+        double timeout = 3000;
+        while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
+            Encoders e = new Encoders(hw);
+
+        }
+        drivetrain.stop();
+    }
+    /*private void crypto(int ticks, double speed, double p, Direction direction) {
+        int backLeftStart = hw.backLeft.getCurrentPosition();
+        int backRightStart = hw.backRight.getCurrentPosition();
+        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
+        int forwardRightStart = hw.forwardRight.getCurrentPosition();
+        int currentTicks = 0;
+        while(opModeIsActive() && currentTicks < ticks) {
+            double distance = 0;
+            try {
+                hw.distanceSensor.startRanging(VL53L0X.VL53L0X_BEST_ACCURACY_MODE);
+            }
+            catch(Exception e) {
+                RobotLog.e(e.toString());
+            }
+            try {
+                distance = hw.distanceSensor.getDistance();
+            }
+            catch (Exception e) {
+                RobotLog.e(e.toString());
+            }
+
+            if (distance < 150 && distance != 0 && distance != 20) {
+                currentTicks++;
+            }
+
+            int backLeft = hw.backLeft.getCurrentPosition();
+            int backRight = hw.backRight.getCurrentPosition();
+            int forwardLeft = hw.forwardLeft.getCurrentPosition();
+            int forwardRight = hw.forwardRight.getCurrentPosition();
+
+            int backLeftDiff = Math.abs(backLeft - backLeftStart);
+            int backRightDiff = Math.abs(backRight - backRightStart);
+            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
+            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
+            
+            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+            double backLeftComp = (avg - backLeftDiff) * p;
+            double backRightComp = (avg - backRightDiff) * p;
+            double forwardLeftComp = (avg - forwardLeftDiff) * p;
+            double forwardRightComp = (avg - forwardRightDiff) * p;
+            switch (direction) {
+                case LEFT:
+                    hw.forwardRight.setPower(speed + forwardRightComp);
+                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
+                    hw.backRight.setPower(-speed - backRightComp);
+                    hw.backLeft.setPower(speed + backLeftComp);
+                    break;
+                case RIGHT:
+                    hw.forwardRight.setPower(-speed - forwardRightComp);
+                    hw.forwardLeft.setPower(speed + forwardLeftComp);
+                    hw.backRight.setPower(speed + backRightComp);
+                    hw.backLeft.setPower(-speed - backLeftComp);
+                    break;
+
+            }
+        }
+        drivetrain.stop();
+    }*/
 
     private void release() {
         hw.altClawLeft.setPosition(0.225);

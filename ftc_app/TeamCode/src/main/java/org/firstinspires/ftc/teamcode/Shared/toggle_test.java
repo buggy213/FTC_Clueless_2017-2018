@@ -25,6 +25,7 @@ public class toggle_test extends LinearOpMode {
             telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
             telemetry.addData("BL", robot.backLeft.getCurrentPosition());
             telemetry.addData("BR", robot.backRight.getCurrentPosition());
+            telemetry.addData("RGBA", robot.bottom_color.red() + ", " + robot.bottom_color.green() + ", " + robot.bottom_color.blue() + ", " + robot.bottom_color.alpha());
             telemetry.update();
         }
     }

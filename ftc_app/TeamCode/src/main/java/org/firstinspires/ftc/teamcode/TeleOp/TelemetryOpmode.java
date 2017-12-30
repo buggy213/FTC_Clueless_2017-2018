@@ -93,7 +93,7 @@ public class TelemetryOpmode extends LinearOpMode {
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
-        robot.jewelArm1.setPosition(0);
+        robot.jewelArm1.setPosition(0.05);
         robot.jewelArm2.setPosition(1);
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -160,41 +160,41 @@ public class TelemetryOpmode extends LinearOpMode {
 
             switch (altClawPosition) {
                 case 0: // Resting
-                    robot.altClawLeft.setPosition(0.85);
-                    robot.altClawRight.setPosition(0.15);
+                    robot.altClawLeft.setPosition(0.91);
+                    robot.altClawRight.setPosition(0.05);
                     break;
                 case 1:  // open altClaw
                     if (altClawTurned == 1) {  // center
                         // Ready to grab
-                        robot.altClawLeft.setPosition(0.300);  // 0.225
-                        robot.altClawRight.setPosition(0.500);  // 0.727
+                        robot.altClawLeft.setPosition(0.35);  // 0.225
+                        robot.altClawRight.setPosition(0.65);  // 0.727
                     }
                     // releasing left or right altClaw depending on the turn position
                     else if (altClawTurned == 0) {
                         // Right releasing
-                        robot.altClawLeft.setPosition(0.496);
-                        robot.altClawRight.setPosition(0.662); // 0.94
+                        robot.altClawLeft.setPosition(0.500);  // Keep this same as two-glyph setting
+                        robot.altClawRight.setPosition(0.840); //
                     }
                     else if (altClawTurned == 2) {
                         // Left releasing
-                        robot.altClawLeft.setPosition(0.163);  // 0.02
-                        robot.altClawRight.setPosition(0.325);
+                        robot.altClawLeft.setPosition(0.160);  //
+                        robot.altClawRight.setPosition(0.500);  // Keep this same as two-glyph setting
                     }
                     break;
                 case 2:
                     // Grabbing two glyphs
-                    robot.altClawLeft.setPosition(0.496);  //0.346
-                    robot.altClawRight.setPosition(0.325); //0.567
+                    robot.altClawLeft.setPosition(0.500);  //0.346
+                    robot.altClawRight.setPosition(0.500); //0.567
                     break;
                 case 3:
                     // Grabbing one glyphs
-                    robot.altClawLeft.setPosition(0.652);  //0.610
-                    robot.altClawRight.setPosition(0.227);  //0.276
+                    robot.altClawLeft.setPosition(0.68);  //0.610
+                    robot.altClawRight.setPosition(0.32);  //0.276
                     break;
                 case 4:  // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
                     robot.altClawLeft.setPosition(0.600); //0.550
-                    robot.altClawRight.setPosition(0.300); //0.336
+                    robot.altClawRight.setPosition(0.400); //0.336
                     break;
             }
 

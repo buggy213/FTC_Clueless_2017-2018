@@ -47,8 +47,6 @@ public class RobotHardware {
 
     public Servo upperLeft;
     public Servo upperRight;
-    public Servo lowerLeft;
-    public Servo lowerRight;
     public Servo altClawLeft;
     public Servo altClawRight;
     public Servo altClawTurn;

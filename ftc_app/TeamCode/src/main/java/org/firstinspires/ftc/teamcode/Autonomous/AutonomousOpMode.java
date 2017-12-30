@@ -351,10 +351,10 @@ public class AutonomousOpMode extends LinearOpMode {
 
         public void compensate(RobotHardware hw, double speed, Encoders target, Direction direction, double p) {
             if (direction == Direction.LEFT) {
-                double backLeftComp = () * p;
-                double backRightComp = (avg - backRightDiff) * p;
-                double forwardLeftComp = (avg - forwardLeftDiff) * p;
-                double forwardRightComp = (avg - forwardRightDiff) * p;
+                //double backLeftComp = (1) * p;
+                //double backRightComp = (avg - backRightDiff) * p;
+                //double forwardLeftComp = (avg - forwardLeftDiff) * p;
+                //double forwardRightComp = (avg - forwardRightDiff) * p;
             }
             else {
 
@@ -362,7 +362,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
-    private Direction opposite(Direction input) {
+   /* private Direction opposite(Direction input) {
         if (input == Direction.BACKWARD) {
             return Direction.FORWARD;
         }
@@ -375,7 +375,7 @@ public class AutonomousOpMode extends LinearOpMode {
         if (input == Direction.RIGHT) {
             return Direction.LEFT;
         }
-    }
+    } */
 
     private void lightCrypto(double blueThreshold, double speed, double p, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();

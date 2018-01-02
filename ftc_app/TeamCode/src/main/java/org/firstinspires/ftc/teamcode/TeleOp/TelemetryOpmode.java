@@ -78,7 +78,9 @@ public class TelemetryOpmode extends LinearOpMode {
     // Constants for teleop
     final double turnSpeed = 0.6;
     final double slowSpeed = 0.4;
+    final double slowestSpeed = 0.2;
 
+    boolean reverse = false;
     int upperClawEngaged = 0;
 
     int altClawTurned = 1;
@@ -86,6 +88,7 @@ public class TelemetryOpmode extends LinearOpMode {
 
     boolean releaseGlyphs;
     boolean slowMode = true;
+    boolean turningTowards = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -118,9 +121,9 @@ public class TelemetryOpmode extends LinearOpMode {
         while (opModeIsActive()) {
             // Driving Gamepads logic
             // region driving
-            double turn = (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
+            double turn = ((reverse) ? 1 : -1) * (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
 
-            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0)) {
+            if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0) && !turningTowards) {
 
                 double speed = 1;
                 if (gamepad1.right_stick_y == 0) {
@@ -132,7 +135,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 }
 
                 double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
-                drivetrain.MoveAngle(speed, angle, turn);
+                drivetrain.MoveAngle(speed, angle + ((reverse) ? Math.PI : 0), turn);
             } else {
                 drivetrain.stop();
             }
@@ -150,13 +153,31 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             if (gamepad2.dpad_down) {  // Grabbing one glyphs
                 altClawPosition = 3;
+                if ( altClawTurned == 1 ) { // unless altClaw is in the center position, disallowed upperClaw to be engaged
+                    upperClawEngaged = 1;
+                }
             }
+
+            if (gamepad1.a) {
+                reverse = true;
+            }
+
+            if (gamepad1.b) {
+                reverse = false;
+            }
+            turningTowards = gamepad1.x;
+            if (gamepad1.x) {
+
+                drivetrain.GyroTurnTeleop(0.2, 90);
+            }
+
             if (gamepad2.a) {
                 altClawPosition = 4; // slight open
-            }
-            if (gamepad2.b) {
                 upperClawEngaged = 2 ;  // slight open
             }
+            //if (gamepad2.b) {
+            //    upperClawEngaged = 2 ;  // slight open
+            //}
 
             switch (altClawPosition) {
                 case 0: // Resting
@@ -172,19 +193,19 @@ public class TelemetryOpmode extends LinearOpMode {
                     // releasing left or right altClaw depending on the turn position
                     else if (altClawTurned == 0) {
                         // Right releasing
-                        robot.altClawLeft.setPosition(0.500);  // Keep this same as two-glyph setting
+                        robot.altClawLeft.setPosition(0.35);  // Keep this same as two-glyph setting or center
                         robot.altClawRight.setPosition(0.840); //
                     }
                     else if (altClawTurned == 2) {
                         // Left releasing
                         robot.altClawLeft.setPosition(0.160);  //
-                        robot.altClawRight.setPosition(0.500);  // Keep this same as two-glyph setting
+                        robot.altClawRight.setPosition(0.65);  // Keep this same as two-glyph setting or center
                     }
                     break;
                 case 2:
                     // Grabbing two glyphs
-                    robot.altClawLeft.setPosition(0.500);  //0.346
-                    robot.altClawRight.setPosition(0.500); //0.567
+                    robot.altClawLeft.setPosition(0.530);  //0.346
+                    robot.altClawRight.setPosition(0.470); //0.567
                     break;
                 case 3:
                     // Grabbing one glyphs
@@ -198,7 +219,8 @@ public class TelemetryOpmode extends LinearOpMode {
                     break;
             }
 
-            if (gamepad2.left_bumper && gamepad2.right_bumper) {
+
+            if ( (gamepad2.left_bumper && gamepad2.right_bumper) || gamepad2.b ) {
                 robot.altClawTurn.setPosition(0.5);  // center
                 altClawTurned = 1;  // center
             }
@@ -262,6 +284,11 @@ public class TelemetryOpmode extends LinearOpMode {
                     drivetrain.setSpeedMultiplier(0.85);
                 }
             }
+
+            if (gamepad1.dpad_right) {
+                drivetrain.setSpeedMultiplier(slowestSpeed);
+            }
+
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
 

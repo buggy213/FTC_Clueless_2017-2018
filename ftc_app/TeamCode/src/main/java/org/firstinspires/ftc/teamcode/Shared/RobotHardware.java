@@ -55,6 +55,7 @@ public class RobotHardware {
     public ColorSensor right_color;
     public ColorSensor bottom_color;
 
+    public LVEZ4 ultrasonic;
     public BNO055IMU imu;
 
     // Initializes the BNO055 IMU built into the REV Expansion Hub
@@ -95,15 +96,26 @@ public class RobotHardware {
         Field[] allFields = this.getClass().getDeclaredFields();
         for (Field field : allFields) {
             RobotLog.i(field.getName() + ":" + field.getType());
-            if (HardwareDevice.class.isAssignableFrom(field.getType())) {
+            try {
+                if (HardwareDevice.class.isAssignableFrom(field.getType())) {
 
-                // Hardware device, try to assign
-                try {
-                    field.set(this, hwMap.get(field.getType(), field.getName()));
+                    // Hardware device, try to assign
+                    try {
+                        field.set(this, hwMap.get(field.getType(), field.getName()));
+                    } catch (IllegalAccessException e) {
+                        RobotLog.e("Error during reflection mapping");
+                    }
+                } else if (HardwareDevice.class.isAssignableFrom(field.getType().getConstructors()[0].getParameterTypes()[0])) {
+                    try {
+                        field.set(this, field.getType().getConstructors()[0].newInstance(hwMap.get(field.getType().getConstructors()[0].getParameterTypes()[0], field.getName())));
+                    } catch (Exception e) {
+                        RobotLog.e("Error during reflection mapping (inner)");
+                        RobotLog.e(e.toString());
+                    }
                 }
-                catch (IllegalAccessException e) {
-                    RobotLog.e("Error during reflection mapping");
-                }
+            }
+            catch (ArrayIndexOutOfBoundsException e) {
+                continue;
             }
         }
 

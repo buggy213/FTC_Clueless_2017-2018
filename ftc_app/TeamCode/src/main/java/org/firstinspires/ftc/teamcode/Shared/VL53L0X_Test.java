@@ -9,28 +9,16 @@ import com.qualcomm.robotcore.util.RobotLog;
  */
 @Autonomous(name="DistanceSensor Test", group="test")
 public class VL53L0X_Test extends OpMode {
-    VL53L0X device;
+    LVEZ4 device;
 
     @Override
     public void init() {
-        device = hardwareMap.get(VL53L0X.class, "distanceSensor");
+        device = new LVEZ4(hardwareMap.analogInput.get("ultrasonic"));
     }
 
     @Override
     public void loop() {
-        try {
-            device.startRanging(VL53L0X.VL53L0X_BEST_ACCURACY_MODE);
-        }
-        catch(Exception e) {
-            RobotLog.e(e.toString());
-        }
-        try {
-            telemetry.addData("Distance", device.getDistance());
-        }
-        catch (Exception e) {
-            RobotLog.e(e.toString());
-        }
-
-        telemetry.update();
+        telemetry.addData("Distance", device.distance());
+        telemetry.addData("Voltage", device.getInput().getVoltage());
     }
 }

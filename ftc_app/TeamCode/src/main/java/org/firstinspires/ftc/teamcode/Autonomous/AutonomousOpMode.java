@@ -391,18 +391,19 @@ public class AutonomousOpMode extends LinearOpMode {
         Encoders middle = null;
         while (opModeIsActive()) {
             double timeElapsed = runtime.milliseconds() - firstTime;
-            if (hw.bottom_color.blue() > (hw.bottom_color.red() * 2) && (timeElapsed > 2500 || count == 0)) {
+            if (hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25) && (timeElapsed > 2500 || count == 0)) {
 
                 first = new Encoders(hw);
-                while (opModeIsActive() && hw.bottom_color.blue() > (hw.bottom_color.red() * 2)) {
+                while (opModeIsActive() && hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25)) {
 
                 }
 
-                while (opModeIsActive() && !(hw.bottom_color.blue() > (hw.bottom_color.red() * 2))){
+                while (opModeIsActive() && !(hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25))){
 
                 }
                 second = new Encoders(hw);
                 middle = first.average(second);
+                middle.set(drivetrain, hw);
                 drivetrain.setPowerAll(speed);
                 break;
 
@@ -448,29 +449,16 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         drivetrain.stop();
     }
-    /*private void crypto(int ticks, double speed, double p, Direction direction) {
+    private void crypto(int ticks, double speed, double p, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
         int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
         int forwardRightStart = hw.forwardRight.getCurrentPosition();
         int currentTicks = 0;
         while(opModeIsActive() && currentTicks < ticks) {
-            double distance = 0;
-            try {
-                hw.distanceSensor.startRanging(VL53L0X.VL53L0X_BEST_ACCURACY_MODE);
-            }
-            catch(Exception e) {
-                RobotLog.e(e.toString());
-            }
-            try {
-                distance = hw.distanceSensor.getDistance();
-            }
-            catch (Exception e) {
-                RobotLog.e(e.toString());
-            }
+            double distance = hw.ultrasonic.distance();
+            if (distance < 5) {
 
-            if (distance < 150 && distance != 0 && distance != 20) {
-                currentTicks++;
             }
 
             int backLeft = hw.backLeft.getCurrentPosition();
@@ -505,7 +493,7 @@ public class AutonomousOpMode extends LinearOpMode {
             }
         }
         drivetrain.stop();
-    }*/
+    }
 
     private void release() {
         hw.altClawLeft.setPosition(0.225);

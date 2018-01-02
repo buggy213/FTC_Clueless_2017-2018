@@ -110,6 +110,25 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
+    public void GyroTurnTeleop(double speed, double angle) {
+        // Angle is counterclockwise (sorry)
+        double normalizedHeading = normalize(getHeading());
+        double normalizedAngle = normalize(angle);
+        double angleDiff = normalizedHeading - normalizedAngle;
+
+        angleDiff = (angleDiff / 180) * Math.PI;
+        double c = sin(angleDiff);
+        if (c >= 0) {
+            // CW
+            MoveAngle(0, 0, speed);
+
+        }
+        else if (c < 0) {
+            // CCW
+            MoveAngle(0, 0, -speed);
+        }
+    }
+
     // Pulls a one-eighty using the gyro, doesn't need to be precise
     public void OneEighty(double angle, double speed) {
         // Angle is counterclockwise (sorry)

@@ -16,6 +16,7 @@ public class Calibrate extends OpMode {
 
     @Override
     public void init() {
+        msStuckDetectInit = 30000;
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         if (robot.imu == null) {
             robot.ReinitializeIMU();

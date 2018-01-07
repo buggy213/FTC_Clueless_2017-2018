@@ -14,6 +14,9 @@ import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import com.qualcomm.ftcrobotcontroller.R;
+
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,11 +30,7 @@ public class SetParametersActivity extends Activity {
     // String array containing parameters that need to be set
     String[] values = {
             "ENUM",
-            "start,RED_CLOSE,RED_FAR,BLUE_CLOSE,BLUE_FAR",
-            "NUMBER",
-            "red_threshold, 75",
-            "NUMBER",
-            "blue_threshold, 150"
+            "start,RED_CLOSE,RED_FAR,BLUE_CLOSE,BLUE_FAR"
     };
 
     @Override
@@ -104,11 +103,15 @@ public class SetParametersActivity extends Activity {
                             break;
                     }
                 }
+                save(sb.toString());
                 done(sb.toString());
+
             }
         });
     }
+    void save(String string) {
 
+    }
     final void done(String result) {
         Intent returnIntent = new Intent();
         returnIntent.putExtra("data", result);

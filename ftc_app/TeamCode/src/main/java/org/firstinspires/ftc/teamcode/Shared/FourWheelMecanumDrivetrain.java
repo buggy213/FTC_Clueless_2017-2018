@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode.Shared;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.configuration.MotorConfiguration;
 
+import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
@@ -68,6 +70,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     // Gyroscope Sensor based turn, untested
     public void GyroTurn(double speed, double angle) {
         // Angle is counterclockwise (sorry)
+
         double normalizedHeading = normalize(getHeading());
         double normalizedAngle = normalize(angle);
         double angleDiff = normalizedHeading - normalizedAngle;
@@ -84,7 +87,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             MoveAngle(0, 0, -speed);
         }
 
-        while (true) {
+        while (opModeIsActive()) {
             double angle1 = normalize(angle + turnThreshold);
             double angle2 = normalize(angle - turnThreshold);
             double target = normalize(getHeading());

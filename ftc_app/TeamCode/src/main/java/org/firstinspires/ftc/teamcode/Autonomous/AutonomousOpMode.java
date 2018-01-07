@@ -91,7 +91,7 @@ public class AutonomousOpMode extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         hw = RobotHardware.GetSingleton(hardwareMap);
-        // Match     parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
+        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
         drivetrain = new FourWheelMecanumDrivetrain();
         hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -105,7 +105,7 @@ public class AutonomousOpMode extends LinearOpMode {
             hw.ReinitializeIMU();
         }
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
-
+        resetJewelArms();
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -130,10 +130,11 @@ public class AutonomousOpMode extends LinearOpMode {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(150);
-                    hw.linearSlideDriveMotor.setPower(0.5);
+
+                    hw.linearSlideDriveMotor.setPower(-0.5);
                     Thread.sleep(1500);
                     hw.linearSlideDriveMotor.setPower(0);
+
                 } catch (InterruptedException e) {
 
                 }
@@ -143,8 +144,8 @@ public class AutonomousOpMode extends LinearOpMode {
             @Override
             public void run() {
                 try {
-                    hw.linearSlideDriveMotor.setPower(-0.5);
-                    Thread.sleep(500);
+                    hw.linearSlideDriveMotor.setPower(0.5);
+                    Thread.sleep(1000);
                     hw.linearSlideDriveMotor.setPower(0);
                 } catch (InterruptedException e) {
 
@@ -156,137 +157,73 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread dropGlpyh = new Thread(motorDrop);
 
         hw.right_color.enableLed(true);
-        // telemetry.addData("Blue", parameters.getInt("blue_threshold"));
-        // Wait for the game to start (driver presses PLAY)
         this.waitForStart();
+
+        // Wait for the game to start (driver presses PLAY)
         runtime.reset();
-        lightCrypto(0, 0.1, 0.0003, Direction.RIGHT);
-        //crypto(2, 0.08, 0.0003, Direction.RIGHT);
-        /*
+        hw.altClawTurn.setPosition(0.5);  // center
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            Direction vumark = null;
+            switch(lastKnownVumark) {
+                case LEFT:
+                    vumark = Direction.LEFT;
+                    break;
+                case RIGHT:
+                    vumark = Direction.RIGHT;
+                    break;
+                case CENTER:
+                    vumark = Direction.FORWARD;
+                    break;
+            }
             String mode = parameters.get("start");
             boolean close = mode.contains("CLOSE");
             boolean red = mode.contains("RED");
 
-            grab();
-            liftGlyph.start();
-            hw.altClawTurn.setPosition(0.5);  // center
+            jewelArms(!red);
+            // Open altClaw
+            hw.altClawLeft.setPosition(0.35);  // 0.225
+            hw.altClawRight.setPosition(0.65);  // 0.727
 
-            if (red) {
-                AutoMove(0.2, 0, 65);
-                Thread.sleep(1000);
-                jewelArms(false);
-                Thread.sleep(2500);
-                int redVal = hw.right_color.red();
-                int blue = hw.right_color.blue();
-                boolean detectRed;
-                detectRed = redVal > blue;
+            sleep(1000);
 
-                if (detectRed) {
-                    AutoMove(-0.2, 0, 90);
-                    resetJewelArms();
-                    Thread.sleep(600);
-                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
-                        AutoMove(0.2, 0, 1700);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
-                        AutoMove(0.2, 0, 2050);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
-                        AutoMove(0.2, 0, 1700);
-                    }
-                } else {
-                    AutoMove(0.2, 0, 90);
-                    resetJewelArms();
-                    Thread.sleep(600);
-                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
-                        AutoMove(0.2, 0, 1000);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
-                        AutoMove(0.2, 0, 1600);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                }
-            } else {
-                AutoMove(0.2, 0, 65);
-                Thread.sleep(1000);
-                jewelArms(true);
-                Thread.sleep(2500);
-                int redVal = hw.left_color.red();
-                int blue = hw.left_color.blue();
-                boolean detectRed;
-                detectRed = redVal > blue;
-                RobotLog.i("USER Red value" + redVal);
-                RobotLog.i("USER Blue value" + blue);
-                RobotLog.i("USER Red detected" + detectRed);
-                if (detectRed) {
-                    AutoMove(0.2, 0, 90);
-                    resetJewelArms();
-                    Thread.sleep(600);
-                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
-                        AutoMove(0.2, 0, 1000);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
-                        AutoMove(0.2, 0, 1600);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                } else {
-                    AutoMove(-0.2, 0, 90);
-                    resetJewelArms();
-                    Thread.sleep(600);
-                    if (lastKnownVumark == RelicRecoveryVuMark.LEFT) {
-                        AutoMove(0.2, 0, 1350);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.CENTER) {
-                        AutoMove(0.2, 0, 1700);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.RIGHT) {
-                        AutoMove(0.2, 0, 2050);
-                    }
-                    if (lastKnownVumark == RelicRecoveryVuMark.UNKNOWN) {
-                        AutoMove(0.2, 0, 1700);
-                    }
-                }
-            }
-            if (close) {
-                if (red) {
-                    // Angle is counterclockwise
-                    drivetrain.GyroTurn(0.15, -88.5);
-                } else {
-                    drivetrain.GyroTurn(0.15, 88.5);
-                }
-            } else {
-
-            }
+            flick(!red, red);
 
             dropGlpyh.start();
-            drivetrain.AutoMove(0.2, 0, 1.5);
-            AutoMove(-0.2, 0, 50);
-            release();
-            AutoMove(-0.2, 0, 150);
 
-            /*if (close) {
-                AutoMove(-0.2, 0, 300);
-                drivetrain.OneEighty(90, 0.2);
-            }*/
+            sleep(2000);
 
+            resetFlickers();
+            resetJewelArms();
 
-            /*requestOpModeStop();
-        }*/
+            // Close altClaw
+            hw.altClawLeft.setPosition(0.68);  //0.610
+            hw.altClawRight.setPosition(0.32);  //0.276
+            sleep(750);
+            liftGlyph.start();
+            sleep(1500);
+            if (close) {
+                AutoMove(0.25, 0, 950);
+                if (red) {
+                    drivetrain.GyroTurn(0.1, -90);
+                }
+                else {
+                    drivetrain.GyroTurn(0.1, 90);
+                }
+            }
+            else {
+
+            }
+            if (red) {
+
+            }
+            else {
+                lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 400);
+            }
+
+            requestOpModeStop();
+        }
 
         hw.imu.stopAccelerationIntegration();
 
@@ -315,7 +252,52 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.altClawLeft.setPosition(0.610);
         hw.altClawRight.setPosition(0.276);
     }
-    
+    public void flick(boolean left, boolean red) {
+        if (left) {
+            if (hw.left_color.red() > hw.left_color.blue()) {
+                if (red) {
+                    // Flick forward
+                    hw.leftFlick.setPosition(0);
+                }
+                else {
+                    // Flick back
+                    hw.leftFlick.setPosition(1);
+                }
+            }
+            else {
+                if (red) {
+                    // Flick back
+                    hw.leftFlick.setPosition(1);
+                }
+                else {
+                    // Flick forward
+                    hw.leftFlick.setPosition(0);
+                }
+            }
+        }
+        else {
+            if (hw.right_color.red() > hw.right_color.blue()) {
+                if (red) {
+                    // Flick back
+                }
+                else {
+                    // Flick forward
+                }
+            }
+            else {
+                if (red) {
+                    // Flick forward
+                }
+                else {
+                    // Flick back
+                }
+            }
+        }
+    }
+
+    void resetFlickers() {
+        hw.leftFlick.setPosition(0.428);
+    }
     class Encoders {
         int backLeft;
         int backRight;
@@ -349,6 +331,24 @@ public class AutonomousOpMode extends LinearOpMode {
             return e;
         }
 
+        public void applyOffset(Direction direction, double amount) {
+            if (direction == Direction.FORWARD) {
+                return;
+            }
+            if (direction == Direction.LEFT) {
+                forwardLeft -= amount;
+                forwardRight += amount;
+                backLeft += amount;
+                backRight -= amount;
+            }
+            if (direction == Direction.RIGHT) {
+                forwardLeft += amount;
+                forwardRight -= amount;
+                backLeft -= amount;
+                backRight += amount;
+            }
+        }
+
         public void compensate(RobotHardware hw, double speed, Encoders target, Direction direction, double p) {
             if (direction == Direction.LEFT) {
                 //double backLeftComp = (1) * p;
@@ -362,7 +362,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
-   /* private Direction opposite(Direction input) {
+   private Direction opposite(Direction input) {
         if (input == Direction.BACKWARD) {
             return Direction.FORWARD;
         }
@@ -375,34 +375,76 @@ public class AutonomousOpMode extends LinearOpMode {
         if (input == Direction.RIGHT) {
             return Direction.LEFT;
         }
-    } */
+        return null;
+    }
 
-    private void lightCrypto(double blueThreshold, double speed, double p, Direction direction) {
+    private void lightCrypto(double speed, double p, Direction direction, Direction desired, boolean blue, int offset) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
         int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
         int forwardRightStart = hw.forwardRight.getCurrentPosition();
         int count = 0;
         double firstTime = 0;
-        int offset = 100;
         
         Encoders first = null;
         Encoders second = null;
         Encoders middle = null;
+        
+        double dominantColor;
+        double secondaryColor;
+        double multiplier;
+        
         while (opModeIsActive()) {
             double timeElapsed = runtime.milliseconds() - firstTime;
-            if (hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25) && (timeElapsed > 2500 || count == 0)) {
+            if (blue) {
+                dominantColor = hw.bottom_color.blue();
+                secondaryColor = hw.bottom_color.red();
+                multiplier = 1.25;
+            }
+            else {
+                dominantColor = hw.bottom_color.red();
+                secondaryColor = hw.bottom_color.blue();
+                multiplier = 1.25;
+            }
+            
+            if (dominantColor > (secondaryColor * multiplier)) {
 
                 first = new Encoders(hw);
-                while (opModeIsActive() && hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25)) {
-
+                while (opModeIsActive() && dominantColor > (secondaryColor * multiplier)) {
+                    if (blue) {
+                        dominantColor = hw.bottom_color.blue();
+                        secondaryColor = hw.bottom_color.red();
+                    }
+                    else {
+                        dominantColor = hw.bottom_color.red();
+                        secondaryColor = hw.bottom_color.blue();
+                    }
                 }
-
-                while (opModeIsActive() && !(hw.bottom_color.blue() > (hw.bottom_color.red() * 1.25))){
-
+                while (opModeIsActive() && !(dominantColor > (secondaryColor * multiplier))){
+                    if (blue) {
+                        dominantColor = hw.bottom_color.blue();
+                        secondaryColor = hw.bottom_color.red();
+                    }
+                    else {
+                        dominantColor = hw.bottom_color.red();
+                        secondaryColor = hw.bottom_color.blue();
+                    }
+                }
+                while (opModeIsActive() && (dominantColor > (secondaryColor * multiplier))){
+                    if (blue) {
+                        dominantColor = hw.bottom_color.blue();
+                        secondaryColor = hw.bottom_color.red();
+                        multiplier = 1.25;
+                    }
+                    else {
+                        dominantColor = hw.bottom_color.red();
+                        secondaryColor = hw.bottom_color.blue();
+                        multiplier = 1.25;
+                    }
                 }
                 second = new Encoders(hw);
                 middle = first.average(second);
+                middle.applyOffset(desired, offset);
                 middle.set(drivetrain, hw);
                 drivetrain.setPowerAll(speed);
                 break;
@@ -502,7 +544,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
     private void jewelArms(boolean left) {
         if (left) {
-            hw.jewelArm1.setPosition(0.479);
+            hw.jewelArm1.setPosition(0.511);
         } else {
             hw.jewelArm2.setPosition(0.446);
         }

@@ -30,10 +30,8 @@ public class Test extends OpMode {
     @Override
     public void init() {
         timer = new ElapsedTime();
-        leftClaw = hardwareMap.servo.get("altClawLeft");
-        rightClaw = hardwareMap.servo.get("altClawRight");
-        //leftClaw = hardwareMap.servo.get("jewelArm1");
-        //rightClaw = hardwareMap.servo.get("jewelArm2");
+        leftClaw = hardwareMap.servo.get("leftFlick");
+        rightClaw = hardwareMap.servo.get("rightFlick");
         leftColor = hardwareMap.colorSensor.get("left_color");
         rightColor = hardwareMap.colorSensor.get("right_color");
         //distanceSensor = hardwareMap.get(DistanceSensor.class, "sensorDistance");

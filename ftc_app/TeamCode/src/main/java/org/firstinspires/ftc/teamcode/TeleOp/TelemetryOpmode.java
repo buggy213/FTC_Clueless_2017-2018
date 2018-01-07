@@ -52,7 +52,6 @@ import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
-
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -77,14 +76,14 @@ public class TelemetryOpmode extends LinearOpMode {
 
     // Constants for teleop
     final double turnSpeed = 0.6;
+    final double normalSpeed = 0.85;
     final double slowSpeed = 0.4;
     final double slowestSpeed = 0.2;
 
     boolean reverse = false;
-    int upperClawEngaged = 0;
-
-    int altClawTurned = 1;
     int altClawPosition = 1;
+    int upperClawPosition = 0;
+    int altClawTurned = 1;
 
     boolean releaseGlyphs;
     boolean slowMode = true;
@@ -96,8 +95,8 @@ public class TelemetryOpmode extends LinearOpMode {
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
 
-        robot.jewelArm1.setPosition(0.05);
-        robot.jewelArm2.setPosition(1);
+        robot.jewelArm1.setPosition(0.15);
+        robot.jewelArm2.setPosition(0.85);
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -142,20 +141,30 @@ public class TelemetryOpmode extends LinearOpMode {
             //endregion
 
 
-             if (gamepad2.dpad_right) {
-                altClawPosition = 0;  // resting
+            if (gamepad2.dpad_right) {
+                altClawPosition = 0;  // Complete closed
+                upperClawPosition = 0; // open upperClaw
             }
             if (gamepad2.dpad_left) {
                 altClawPosition = 1;  // open altClaw
+                upperClawPosition = 0; // open upperClaw
             }
             if (gamepad2.dpad_up) {  // Grabbing two glyphs
                 altClawPosition = 2;
+                upperClawPosition = 0; // open upperClaw
             }
             if (gamepad2.dpad_down) {  // Grabbing one glyphs
                 altClawPosition = 3;
-                if ( altClawTurned == 1 ) { // unless altClaw is in the center position, disallowed upperClaw to be engaged
-                    upperClawEngaged = 1;
+                if (altClawTurned == 1) { // unless altClaw is in the center position, disallowed upperClaw to be engaged
+                    upperClawPosition = 1;
                 }
+            }
+
+            if ( (gamepad2.x) && (altClawTurned == 1) ) {  // unless altClaw is in the center position, disallowed upperClaw to be engaged
+                upperClawPosition = 1;
+            }
+            if (gamepad2.y) {
+                upperClawPosition = 0;
             }
 
             if (gamepad1.a) {
@@ -173,14 +182,40 @@ public class TelemetryOpmode extends LinearOpMode {
 
             if (gamepad2.a) {
                 altClawPosition = 4; // slight open
-                upperClawEngaged = 2 ;  // slight open
+                upperClawPosition = 2 ;  // slight open
             }
             //if (gamepad2.b) {
-            //    upperClawEngaged = 2 ;  // slight open
+            //    upperClawPosition = 2 ;  // slight open
             //}
 
+            if ( (gamepad2.left_bumper && gamepad2.right_bumper) || gamepad2.b ) {
+                robot.altClawTurn.setPosition(0.5);  // center
+                altClawTurned = 1;  // center
+            }
+            else if (gamepad2.left_bumper) {
+                // if turning altClaw, make sure upperClaw is open before turning
+                robot.upperLeft.setPosition(0.23);
+                robot.upperRight.setPosition(0.77);
+                upperClawPosition = 0;
+                //wait(200);
+
+
+                robot.altClawTurn.setPosition(0); // left turn
+                altClawTurned = 0;  // left turn
+            }
+            else if (gamepad2.right_bumper) {
+                // if turning altClaw, make sure upperClaw is open
+                robot.upperLeft.setPosition(0.23);
+                robot.upperRight.setPosition(0.77);
+                upperClawPosition = 0;
+                //wait(200);
+
+                robot.altClawTurn.setPosition(1);  // right turn
+                altClawTurned = 2;  // right turn
+            }
+
             switch (altClawPosition) {
-                case 0: // Resting
+                case 0: // Complete closed
                     robot.altClawLeft.setPosition(0.91);
                     robot.altClawRight.setPosition(0.05);
                     break;
@@ -202,77 +237,37 @@ public class TelemetryOpmode extends LinearOpMode {
                         robot.altClawRight.setPosition(0.65);  // Keep this same as two-glyph setting or center
                     }
                     break;
-                case 2:
-                    // Grabbing two glyphs
+                case 2: // Grabbing two glyphs
                     robot.altClawLeft.setPosition(0.530);  //0.346
                     robot.altClawRight.setPosition(0.470); //0.567
                     break;
-                case 3:
-                    // Grabbing one glyphs
+                case 3: // Grabbing one glyphs
                     robot.altClawLeft.setPosition(0.68);  //0.610
                     robot.altClawRight.setPosition(0.32);  //0.276
                     break;
-                case 4:  // slight open
+                case 4: // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
                     robot.altClawLeft.setPosition(0.600); //0.550
                     robot.altClawRight.setPosition(0.400); //0.336
                     break;
             }
 
-
-            if ( (gamepad2.left_bumper && gamepad2.right_bumper) || gamepad2.b ) {
-                robot.altClawTurn.setPosition(0.5);  // center
-                altClawTurned = 1;  // center
-            }
-            else if (gamepad2.left_bumper) {
-                // if turning altClaw, make sure upperClaw is open before turning
-                robot.upperLeft.setPosition(0.397);
-                robot.upperRight.setPosition(0.554);
-                upperClawEngaged = 0;
-                //wait(200);
-
-
-                robot.altClawTurn.setPosition(0); // left turn
-                altClawTurned = 0;  // left turn
-            }
-            else if (gamepad2.right_bumper) {
-                // if turning altClaw, make sure upperClaw is open
-                robot.upperLeft.setPosition(0.397);
-                robot.upperRight.setPosition(0.554);
-                upperClawEngaged = 0;
-                //wait(200);
-
-                robot.altClawTurn.setPosition(1);  // right turn
-                altClawTurned = 2;  // right turn
-            }
-
-            if (gamepad2.x) {
-                if ( altClawTurned == 1 ) { // unless altClaw is in the center position, disallowed upperClaw to be engaged
-                    upperClawEngaged = 1;
-                }
-            }
-            if (gamepad2.y) {
-                upperClawEngaged = 0;
-            }
-
-            switch (upperClawEngaged) {
+            switch (upperClawPosition) {
                 case 0:
                     // Resting
-                    robot.upperLeft.setPosition(0.397);
-                    robot.upperRight.setPosition(0.554);
+                    robot.upperLeft.setPosition(0.23);
+                    robot.upperRight.setPosition(0.77);
                     break;
                 case 1:
                     // Grabbing
-                    robot.upperLeft.setPosition(0.943);  //0.903
-                    robot.upperRight.setPosition(0.038); //0.078
+                    robot.upperLeft.setPosition(0.6);
+                    robot.upperRight.setPosition(0.36);
                     break;
                 case 2:  // slight open
-                    robot.upperLeft.setPosition(0.85);
-                    robot.upperRight.setPosition(0.128);
+                    robot.upperLeft.setPosition(0.53);
+                    robot.upperRight.setPosition(0.41);
                     break;
             }
-
-
 
             // Toggle drive speed by comparing current and previous left_bumper status
             if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
@@ -281,14 +276,19 @@ public class TelemetryOpmode extends LinearOpMode {
                     drivetrain.setSpeedMultiplier(slowSpeed);
                 }
                 else {
-                    drivetrain.setSpeedMultiplier(0.85);
+                    drivetrain.setSpeedMultiplier(normalSpeed);
                 }
             }
 
+            if (gamepad1.dpad_left) {
+                drivetrain.setSpeedMultiplier(normalSpeed);
+            }
+            if (gamepad1.dpad_up) {
+                drivetrain.setSpeedMultiplier(slowSpeed);
+            }
             if (gamepad1.dpad_right) {
                 drivetrain.setSpeedMultiplier(slowestSpeed);
             }
-
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
 
@@ -306,9 +306,9 @@ public class TelemetryOpmode extends LinearOpMode {
                 RobotLog.e("Something went wrong while copying gamepads");
             }
             // telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
-            telemetry.addData("altClawTurned", altClawTurned);
-            telemetry.addData("upperClawEngaged", upperClawEngaged);
-            telemetry.addData("altClawPosition", altClawPosition);
+            // telemetry.addData("altClawTurned", altClawTurned);
+            // telemetry.addData("upperClawPosition", upperClawPosition);
+            // telemetry.addData("altClawPosition", altClawPosition);
             telemetry.addData("FL", robot.forwardLeft.getCurrentPosition());
             telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
             telemetry.addData("BL", robot.backLeft.getCurrentPosition());

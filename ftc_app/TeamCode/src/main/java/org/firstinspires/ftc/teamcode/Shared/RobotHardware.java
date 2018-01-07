@@ -50,6 +50,8 @@ public class RobotHardware {
     public Servo altClawLeft;
     public Servo altClawRight;
     public Servo altClawTurn;
+    public Servo leftFlick;
+    public Servo rightFlick;
 
     public ColorSensor left_color;
     public ColorSensor right_color;

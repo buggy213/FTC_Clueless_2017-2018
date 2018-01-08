@@ -11,6 +11,7 @@ public class Main {
         Mat rgb = Imgcodecs.imread("imgs/test.jpg");
         Mat grey = new Mat();
         Imgproc.cvtColor(rgb, grey, Imgproc.COLOR_RGBA2GRAY);
-        GlyphDetector.detectGlyphs(rgb, grey);
+        GlyphDetector gd = new GlyphDetector();
+        gd.processFrame(rgb, grey);
     }
 }

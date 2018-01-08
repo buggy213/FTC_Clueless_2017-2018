@@ -91,15 +91,25 @@ public class AutonomousOpMode extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         hw = RobotHardware.GetSingleton(hardwareMap);
+        RobotHardware.SetCurrentRunningOpMode(this);
         MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
+        String mode = parameters.get("start");
+        boolean close = mode.contains("CLOSE");
+        boolean red = mode.contains("RED");
         drivetrain = new FourWheelMecanumDrivetrain();
         hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         hw.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (red) {
+            hw.phoneServo2.setPosition(0.868);
+        }
+        else {
+            hw.phoneServo1.setPosition(0.04);
+        }
+        resetJewelArms();
 
-        hw.phoneServo1.setPosition(0.04);
         // MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
         if (hw.imu == null) {
             hw.ReinitializeIMU();
@@ -159,6 +169,9 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.right_color.enableLed(true);
         this.waitForStart();
 
+        hw.upperLeft.setPosition(0.23);
+        hw.upperRight.setPosition(0.77);
+
         // Wait for the game to start (driver presses PLAY)
         runtime.reset();
         hw.altClawTurn.setPosition(0.5);  // center
@@ -177,9 +190,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     vumark = Direction.FORWARD;
                     break;
             }
-            String mode = parameters.get("start");
-            boolean close = mode.contains("CLOSE");
-            boolean red = mode.contains("RED");
+
 
             jewelArms(!red);
             // Open altClaw
@@ -206,21 +217,28 @@ public class AutonomousOpMode extends LinearOpMode {
             if (close) {
                 AutoMove(0.25, 0, 950);
                 if (red) {
-                    drivetrain.GyroTurn(0.1, -90);
+                    AutoMove(0.1, 0, 100);
+                    drivetrain.GyroTurn(0.15, -90);
                 }
                 else {
-                    drivetrain.GyroTurn(0.1, 90);
+                    AutoMove(0.1, 0, 100);
+                    drivetrain.GyroTurn(0.15, 90);
                 }
             }
             else {
-
+                AutoMove(0.35, 0, 1080);
+                sleep(300);
             }
             if (red) {
-
+                lightCrypto(0.1, 0.0003, Direction.LEFT, vumark, !red, 400);
             }
             else {
                 lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 400);
             }
+
+            AutoMove(0.2, 0, 300);
+            release();
+            AutoMove(-0.2, 0, 150);
 
             requestOpModeStop();
         }
@@ -279,17 +297,21 @@ public class AutonomousOpMode extends LinearOpMode {
             if (hw.right_color.red() > hw.right_color.blue()) {
                 if (red) {
                     // Flick back
+                    hw.rightFlick.setPosition(1);
                 }
                 else {
                     // Flick forward
+                    hw.rightFlick.setPosition(0);
                 }
             }
             else {
                 if (red) {
                     // Flick forward
+                    hw.rightFlick.setPosition(0);
                 }
                 else {
                     // Flick back
+                    hw.rightFlick.setPosition(1);
                 }
             }
         }
@@ -385,7 +407,12 @@ public class AutonomousOpMode extends LinearOpMode {
         int forwardRightStart = hw.forwardRight.getCurrentPosition();
         int count = 0;
         double firstTime = 0;
-        
+        double adjustedOffset = offset;
+        if (opposite(direction) == desired) {
+            adjustedOffset += 25;
+            RobotLog.i("opp dir");
+        }
+
         Encoders first = null;
         Encoders second = null;
         Encoders middle = null;
@@ -444,7 +471,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 }
                 second = new Encoders(hw);
                 middle = first.average(second);
-                middle.applyOffset(desired, offset);
+                middle.applyOffset(desired, adjustedOffset);
                 middle.set(drivetrain, hw);
                 drivetrain.setPowerAll(speed);
                 break;
@@ -484,11 +511,12 @@ public class AutonomousOpMode extends LinearOpMode {
             }
         }
         double start = runtime.milliseconds();
-        double timeout = 3000;
-        while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
+        double timeout = 4500;
+        while (opModeIsActive() && runtime.milliseconds() - start < timeout && (drivetrain.anyIsBusy())) {
             Encoders e = new Encoders(hw);
 
         }
+        drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         drivetrain.stop();
     }
     private void crypto(int ticks, double speed, double p, Direction direction) {
@@ -538,21 +566,21 @@ public class AutonomousOpMode extends LinearOpMode {
     }
 
     private void release() {
-        hw.altClawLeft.setPosition(0.225);
-        hw.altClawRight.setPosition(0.727);
+        hw.altClawLeft.setPosition(0.530);  //0.346
+        hw.altClawRight.setPosition(0.470); //0.567
     }
 
     private void jewelArms(boolean left) {
         if (left) {
             hw.jewelArm1.setPosition(0.511);
         } else {
-            hw.jewelArm2.setPosition(0.446);
+            hw.jewelArm2.setPosition(0.349);
         }
     }
 
     private void resetJewelArms() {
         hw.jewelArm1.setPosition(0);
-        hw.jewelArm2.setPosition(1);
+        hw.jewelArm2.setPosition(0.888);
     }
 
     private void prestart() {

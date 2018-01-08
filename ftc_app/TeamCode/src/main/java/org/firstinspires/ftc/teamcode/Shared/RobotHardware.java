@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,7 +30,7 @@ import java.util.ArrayList;
 public class RobotHardware {
 
     private static RobotHardware hw;
-
+    private static LinearOpMode opMode;
     private HardwareMap hwMap;
 
     public DcMotor forwardLeft;
@@ -73,6 +75,12 @@ public class RobotHardware {
         imu = hwMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
+    }
+    public static void SetCurrentRunningOpMode(LinearOpMode opMode) {
+        RobotHardware.opMode = opMode;
+    }
+    public static LinearOpMode GetCurrentRunningOpMode() {
+        return opMode;
     }
 
     // Access the singleton of the RHW class

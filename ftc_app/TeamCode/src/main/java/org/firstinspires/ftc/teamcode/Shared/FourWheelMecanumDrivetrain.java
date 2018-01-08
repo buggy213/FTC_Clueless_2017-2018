@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Shared;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.configuration.MotorConfiguration;
+import com.qualcomm.robotcore.robot.Robot;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -87,7 +88,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             MoveAngle(0, 0, -speed);
         }
 
-        while (opModeIsActive()) {
+        while (RobotHardware.GetCurrentRunningOpMode().opModeIsActive()) {
             double angle1 = normalize(angle + turnThreshold);
             double angle2 = normalize(angle - turnThreshold);
             double target = normalize(getHeading());

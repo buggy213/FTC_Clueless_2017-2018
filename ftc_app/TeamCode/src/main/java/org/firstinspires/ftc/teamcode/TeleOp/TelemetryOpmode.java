@@ -94,9 +94,8 @@ public class TelemetryOpmode extends LinearOpMode {
 
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
-
-        robot.jewelArm1.setPosition(0.15);
-        robot.jewelArm2.setPosition(0.85);
+        robot.jewelArm1.setPosition(0);  //0.15
+        robot.jewelArm2.setPosition(1);   //0.85
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -255,8 +254,6 @@ public class TelemetryOpmode extends LinearOpMode {
             switch (upperClawPosition) {
                 case 0:
                     // Resting
-                    robot.upperLeft.setPosition(0.23);
-                    robot.upperRight.setPosition(0.77);
                     break;
                 case 1:
                     // Grabbing

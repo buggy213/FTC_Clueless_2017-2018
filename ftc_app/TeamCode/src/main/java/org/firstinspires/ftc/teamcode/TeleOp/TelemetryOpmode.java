@@ -76,26 +76,31 @@ public class TelemetryOpmode extends LinearOpMode {
 
     // Constants for teleop
     final double turnSpeed = 0.6;
-    final double normalSpeed = 0.85;
+    final double fastSpeed = 0.85;
+    final double normalSpeed = 0.4;
     final double slowSpeed = 0.4;
     final double slowestSpeed = 0.2;
 
+    double horizotalSpeedMultiplier = 1;
     boolean reverse = false;
     int altClawPosition = 1;
     int upperClawPosition = 0;
     int altClawTurned = 1;
 
-    boolean releaseGlyphs;
-    boolean slowMode = true;
+    // boolean releaseGlyphs;
+    // boolean slowMode = true;
     boolean turningTowards = false;
+    boolean normalBumper = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
-        robot.jewelArm1.setPosition(0);  //0.15
-        robot.jewelArm2.setPosition(1);   //0.85
+        robot.jewelArm1.setPosition(0.18);  //0.15
+        robot.jewelArm2.setPosition(0.92);   //0.85
+        robot.leftFlick.setPosition(0.61);
+        robot.rightFlick.setPosition(0.35);
 
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -106,8 +111,8 @@ public class TelemetryOpmode extends LinearOpMode {
         robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        // telemetry.addData("Status", "Initialized");
+        // telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -125,7 +130,8 @@ public class TelemetryOpmode extends LinearOpMode {
 
                 double speed = 1;
                 if (gamepad1.right_stick_y == 0) {
-                    speed = 1.25;
+                    speed = 1.25 * horizotalSpeedMultiplier ;
+                    //speed = 1.25 ;
                 }
 
                 if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
@@ -173,11 +179,12 @@ public class TelemetryOpmode extends LinearOpMode {
             if (gamepad1.b) {
                 reverse = false;
             }
-            turningTowards = gamepad1.x;
+
+            /* turningTowards = gamepad1.x;
             if (gamepad1.x) {
 
                 drivetrain.GyroTurnTeleop(0.2, 90);
-            }
+            } */
 
             if (gamepad2.a) {
                 altClawPosition = 4; // slight open
@@ -188,7 +195,7 @@ public class TelemetryOpmode extends LinearOpMode {
             //}
 
             if ( (gamepad2.left_bumper && gamepad2.right_bumper) || gamepad2.b ) {
-                robot.altClawTurn.setPosition(0.5);  // center
+                robot.altClawTurn.setPosition(0.48);  // center
                 altClawTurned = 1;  // center
             }
             else if (gamepad2.left_bumper) {
@@ -198,8 +205,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 upperClawPosition = 0;
                 //wait(200);
 
-
-                robot.altClawTurn.setPosition(0); // left turn
+                robot.altClawTurn.setPosition(0.126); // left turn
                 altClawTurned = 0;  // left turn
             }
             else if (gamepad2.right_bumper) {
@@ -209,56 +215,56 @@ public class TelemetryOpmode extends LinearOpMode {
                 upperClawPosition = 0;
                 //wait(200);
 
-                robot.altClawTurn.setPosition(1);  // right turn
+                robot.altClawTurn.setPosition(0.86);  // right turn
                 altClawTurned = 2;  // right turn
             }
 
             switch (altClawPosition) {
                 case 0: // Complete closed
-                    robot.altClawLeft.setPosition(0.91);
-                    robot.altClawRight.setPosition(0.05);
+                    robot.altClawLeft.setPosition(0.88);
+                    robot.altClawRight.setPosition(0.12);
                     break;
                 case 1:  // open altClaw
                     if (altClawTurned == 1) {  // center
                         // Ready to grab
-                        robot.altClawLeft.setPosition(0.35);  // 0.225
-                        robot.altClawRight.setPosition(0.65);  // 0.727
+                        robot.altClawLeft.setPosition(0.29);
+                        robot.altClawRight.setPosition(0.65);
                     }
                     // releasing left or right altClaw depending on the turn position
                     else if (altClawTurned == 0) {
                         // Right releasing
-                        robot.altClawLeft.setPosition(0.35);  // Keep this same as two-glyph setting or center
-                        robot.altClawRight.setPosition(0.840); //
+                        robot.altClawLeft.setPosition(0.29);  // Keep this same as two-glyph setting or center
+                        robot.altClawRight.setPosition(0.84); //
                     }
                     else if (altClawTurned == 2) {
                         // Left releasing
-                        robot.altClawLeft.setPosition(0.160);  //
+                        robot.altClawLeft.setPosition(0.13);  //
                         robot.altClawRight.setPosition(0.65);  // Keep this same as two-glyph setting or center
                     }
                     break;
                 case 2: // Grabbing two glyphs
-                    robot.altClawLeft.setPosition(0.530);  //0.346
-                    robot.altClawRight.setPosition(0.470); //0.567
+                    robot.altClawLeft.setPosition(0.48);
+                    robot.altClawRight.setPosition(0.47);
                     break;
                 case 3: // Grabbing one glyphs
-                    robot.altClawLeft.setPosition(0.68);  //0.610
-                    robot.altClawRight.setPosition(0.32);  //0.276
+                    robot.altClawLeft.setPosition(0.67);  //0.610
+                    robot.altClawRight.setPosition(0.30);  //0.276
                     break;
                 case 4: // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
-                    robot.altClawLeft.setPosition(0.600); //0.550
-                    robot.altClawRight.setPosition(0.400); //0.336
+                    robot.altClawLeft.setPosition(0.59); //0.550
+                    robot.altClawRight.setPosition(0.37); //0.336
                     break;
             }
 
             switch (upperClawPosition) {
-                case 0:
-                    // Resting
+                case 0: // Resting
+                    robot.upperLeft.setPosition(0.23);
+                    robot.upperRight.setPosition(0.77);
                     break;
-                case 1:
-                    // Grabbing
-                    robot.upperLeft.setPosition(0.6);
-                    robot.upperRight.setPosition(0.36);
+                case 1: // Grabbing
+                    robot.upperLeft.setPosition(0.62);  //0.6
+                    robot.upperRight.setPosition(0.34);  //0.36
                     break;
                 case 2:  // slight open
                     robot.upperLeft.setPosition(0.53);
@@ -267,31 +273,60 @@ public class TelemetryOpmode extends LinearOpMode {
             }
 
             // Toggle drive speed by comparing current and previous left_bumper status
-            if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
+            /* if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
                 slowMode = !slowMode;
                 if (slowMode) {
                     drivetrain.setSpeedMultiplier(slowSpeed);
                 }
                 else {
-                    drivetrain.setSpeedMultiplier(normalSpeed);
+                    drivetrain.setSpeedMultiplier(fastSpeed);
                 }
+            } */
+
+            if (gamepad1.guide && !previousGamepad1.guide) {
+                 normalBumper = !normalBumper;
             }
 
-            if (gamepad1.dpad_left) {
-                drivetrain.setSpeedMultiplier(normalSpeed);
+            if (gamepad1.dpad_left || gamepad1.left_bumper) {
+                drivetrain.setSpeedMultiplier(fastSpeed);
+                horizotalSpeedMultiplier = 1;
             }
-            if (gamepad1.dpad_up) {
-                drivetrain.setSpeedMultiplier(slowSpeed);
+
+            if (normalBumper) {
+                if (gamepad1.dpad_up) {
+                    drivetrain.setSpeedMultiplier(normalSpeed);
+                    horizotalSpeedMultiplier = 1.4;
+                }
+                if (gamepad1.right_bumper) {
+                    drivetrain.setSpeedMultiplier(slowSpeed);
+                    horizotalSpeedMultiplier = 1;
+                }
+            }
+            else {
+                if (gamepad1.right_bumper) {
+                    drivetrain.setSpeedMultiplier(normalSpeed);
+                    horizotalSpeedMultiplier = 1.4;
+                }
+                if (gamepad1.dpad_up) {
+                    drivetrain.setSpeedMultiplier(slowSpeed);
+                    horizotalSpeedMultiplier = 1;
+                }
             }
             if (gamepad1.dpad_right) {
                 drivetrain.setSpeedMultiplier(slowestSpeed);
+                horizotalSpeedMultiplier = 1.55;
+            }
+
+            if (gamepad2.guide || gamepad2.back) {
+                robot.jewelArm1.setPosition(0.18);
+                robot.jewelArm2.setPosition(0.85);
             }
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
 
             robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
 
-            double linearSlideDrivePower = gamepad2.left_stick_y;
+            double linearSlideDrivePower = gamepad2.left_stick_y + gamepad2.right_stick_y;
 
             robot.linearSlideDriveMotor.setPower(linearSlideDrivePower);
 
@@ -302,16 +337,22 @@ public class TelemetryOpmode extends LinearOpMode {
             catch (RobotCoreException e) {
                 RobotLog.e("Something went wrong while copying gamepads");
             }
+
             // telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
             // telemetry.addData("altClawTurned", altClawTurned);
             // telemetry.addData("upperClawPosition", upperClawPosition);
             // telemetry.addData("altClawPosition", altClawPosition);
-            telemetry.addData("FL", robot.forwardLeft.getCurrentPosition());
-            telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
-            telemetry.addData("BL", robot.backLeft.getCurrentPosition());
-            telemetry.addData("BR", robot.backRight.getCurrentPosition());
-            telemetry.update();
+            // telemetry.addData("normalBumper", normalBumper);
+            // telemetry.addData("FL", robot.forwardLeft.getCurrentPosition());
+            // telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
+            // telemetry.addData("BL", robot.backLeft.getCurrentPosition());
+            // telemetry.addData("BR", robot.backRight.getCurrentPosition());
+            // telemetry.update();
         }
+    }
+
+    private void resetJewelArms() {
+
     }
 
     public boolean between(double lower, double upper, double value) {

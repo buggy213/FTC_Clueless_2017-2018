@@ -103,10 +103,10 @@ public class AutonomousOpMode extends LinearOpMode {
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         if (red) {
-            hw.phoneServo2.setPosition(0.868);
+            hw.phoneServo2.setPosition(0.62);
         }
         else {
-            hw.phoneServo1.setPosition(0.04);
+            hw.phoneServo1.setPosition(0.1);
         }
         resetJewelArms();
 
@@ -116,6 +116,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
         resetJewelArms();
+        resetFlickers();
 
         //region Vuforia
         telemetry.addData("Status", "Initialized");
@@ -140,11 +141,9 @@ public class AutonomousOpMode extends LinearOpMode {
             @Override
             public void run() {
                 try {
-
-                    hw.linearSlideDriveMotor.setPower(-0.5);
-                    Thread.sleep(1500);
+                    hw.linearSlideDriveMotor.setPower(-0.75);
+                    Thread.sleep(1200);
                     hw.linearSlideDriveMotor.setPower(0);
-
                 } catch (InterruptedException e) {
 
                 }
@@ -154,7 +153,7 @@ public class AutonomousOpMode extends LinearOpMode {
             @Override
             public void run() {
                 try {
-                    hw.linearSlideDriveMotor.setPower(0.5);
+                    hw.linearSlideDriveMotor.setPower(0.75);
                     Thread.sleep(1000);
                     hw.linearSlideDriveMotor.setPower(0);
                 } catch (InterruptedException e) {
@@ -167,14 +166,16 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread dropGlpyh = new Thread(motorDrop);
 
         hw.right_color.enableLed(true);
-        this.waitForStart();
+        hw.altClawTurn.setPosition(0.48);  // center
+        hw.upperLeft.setPosition(0.03);
+        hw.upperRight.setPosition(0.91);
 
+        // Wait for the game to start (driver presses PLAY)
+        this.waitForStart();
         hw.upperLeft.setPosition(0.23);
         hw.upperRight.setPosition(0.77);
 
-        // Wait for the game to start (driver presses PLAY)
         runtime.reset();
-        hw.altClawTurn.setPosition(0.5);  // center
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -191,54 +192,92 @@ public class AutonomousOpMode extends LinearOpMode {
                     break;
             }
 
-
             jewelArms(!red);
-            // Open altClaw
-            hw.altClawLeft.setPosition(0.35);  // 0.225
-            hw.altClawRight.setPosition(0.65);  // 0.727
 
+            hw.linearSlideDriveMotor.setPower(-0.75);
+            sleep(500);
+            hw.linearSlideDriveMotor.setPower(0);
+
+            // Open altClaw
+            hw.altClawLeft.setPosition(0.29);  // 0.225
+            hw.altClawRight.setPosition(0.65);  // 0.727
             sleep(1000);
+            // sleep(1000);
 
             flick(!red, red);
 
             dropGlpyh.start();
 
-            sleep(2000);
+            sleep(1000);
 
-            resetFlickers();
             resetJewelArms();
+            resetFlickers();
 
             // Close altClaw
-            hw.altClawLeft.setPosition(0.68);  //0.610
-            hw.altClawRight.setPosition(0.32);  //0.276
-            sleep(750);
+            hw.altClawLeft.setPosition(0.67);  //0.610
+            hw.altClawRight.setPosition(0.30);  //0.276
+            sleep(500);
             liftGlyph.start();
-            sleep(1500);
+            sleep(1200);
             if (close) {
-                AutoMove(0.25, 0, 950);
+                AutoMove(0.25, 0, 1050);
                 if (red) {
-                    AutoMove(0.1, 0, 100);
-                    drivetrain.GyroTurn(0.15, -90);
+                    //AutoMove(0.1, 0, 100);
+                    drivetrain.GyroTurn(0.15, -77);
                 }
                 else {
-                    AutoMove(0.1, 0, 100);
+                    //AutoMove(0.1, 0, 100);
                     drivetrain.GyroTurn(0.15, 90);
                 }
+                AutoMove(0.15, 0, 20);
             }
             else {
-                AutoMove(0.35, 0, 1080);
+                AutoMove(0.25, 0, 1080);
                 sleep(300);
             }
             if (red) {
-                lightCrypto(0.1, 0.0003, Direction.LEFT, vumark, !red, 400);
+                lightCrypto(0.1, 0.0003, Direction.LEFT, vumark, !red, 425);
             }
             else {
-                lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 400);
+                lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 425);
             }
 
-            AutoMove(0.2, 0, 300);
+            AutoMove(0.25, 0, 240);
+
+            hw.linearSlideDriveMotor.setPower(0.75);
+            sleep(500);
+            hw.linearSlideDriveMotor.setPower(0);
+
+            AutoMove(-0.5, 0, 25);
             release();
-            AutoMove(-0.2, 0, 150);
+            AutoMove(-0.5, 0, 200);
+            if (vumark != Direction.FORWARD) {
+                AutoMove(0.2, vumark == Direction.RIGHT ? -90 : 90, 175);
+            }
+
+            hw.altClawLeft.setPosition(0.88);
+            hw.altClawRight.setPosition(0.12);
+
+            if (close) {
+                if (red) {
+                    drivetrain.GyroTurn(0.4, 90);
+                }
+                else {
+                    drivetrain.GyroTurn(0.4, -90);
+                }
+            }
+            else
+            {
+                if (red) {
+                    drivetrain.GyroTurn(0.4, -180);
+                }
+                else {
+                    drivetrain.GyroTurn(0.4, 180);
+                }
+            }
+            AutoMove(-0.4, 0, 60);
+
+            release();
 
             requestOpModeStop();
         }
@@ -266,13 +305,9 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
-    private void grab() {
-        hw.altClawLeft.setPosition(0.610);
-        hw.altClawRight.setPosition(0.276);
-    }
     public void flick(boolean left, boolean red) {
         if (left) {
-            if (hw.left_color.red() > hw.left_color.blue()) {
+            if (hw.left_color.red() > hw.left_color.blue() * 1.25) {
                 if (red) {
                     // Flick forward
                     hw.leftFlick.setPosition(0);
@@ -294,7 +329,7 @@ public class AutonomousOpMode extends LinearOpMode {
             }
         }
         else {
-            if (hw.right_color.red() > hw.right_color.blue()) {
+            if (hw.right_color.red() > hw.right_color.blue() * 1.25) {
                 if (red) {
                     // Flick back
                     hw.rightFlick.setPosition(1);
@@ -318,16 +353,18 @@ public class AutonomousOpMode extends LinearOpMode {
     }
 
     void resetFlickers() {
-        hw.leftFlick.setPosition(0.428);
+        hw.leftFlick.setPosition(0.38);
+        hw.rightFlick.setPosition(0.50);
     }
+
     class Encoders {
         int backLeft;
         int backRight;
         int forwardLeft;
         int forwardRight;
-        
+
         public Encoders() {
-            
+
         }
         public Encoders(RobotHardware robot) {
             this.backLeft = robot.backLeft.getCurrentPosition();
@@ -335,7 +372,7 @@ public class AutonomousOpMode extends LinearOpMode {
             this.forwardLeft = robot.forwardLeft.getCurrentPosition();
             this.forwardRight = robot.forwardRight.getCurrentPosition();
         }
-        
+
         public void set(FourWheelMecanumDrivetrain dt, RobotHardware hw) {
             dt.setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
             hw.backLeft.setTargetPosition(backLeft);
@@ -343,7 +380,7 @@ public class AutonomousOpMode extends LinearOpMode {
             hw.forwardLeft.setTargetPosition(forwardLeft);
             hw.forwardRight.setTargetPosition(forwardRight);
         }
-        
+
         public Encoders average(Encoders other) {
             Encoders e = new Encoders();
             e.backLeft = (this.backLeft + other.backLeft) / 2;
@@ -371,20 +408,12 @@ public class AutonomousOpMode extends LinearOpMode {
             }
         }
 
-        public void compensate(RobotHardware hw, double speed, Encoders target, Direction direction, double p) {
-            if (direction == Direction.LEFT) {
-                //double backLeftComp = (1) * p;
-                //double backRightComp = (avg - backRightDiff) * p;
-                //double forwardLeftComp = (avg - forwardLeftDiff) * p;
-                //double forwardRightComp = (avg - forwardRightDiff) * p;
-            }
-            else {
-
-            }
+        public int totalDiff(Encoders a) {
+            return Math.abs(a.backLeft - backLeft) + Math.abs(a.backRight - backRight) + Math.abs(a.forwardLeft - forwardLeft) + Math.abs(a.forwardRight - forwardRight);
         }
     }
 
-   private Direction opposite(Direction input) {
+    private Direction opposite(Direction input) {
         if (input == Direction.BACKWARD) {
             return Direction.FORWARD;
         }
@@ -416,11 +445,11 @@ public class AutonomousOpMode extends LinearOpMode {
         Encoders first = null;
         Encoders second = null;
         Encoders middle = null;
-        
+
         double dominantColor;
         double secondaryColor;
         double multiplier;
-        
+
         while (opModeIsActive()) {
             double timeElapsed = runtime.milliseconds() - firstTime;
             if (blue) {
@@ -433,7 +462,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 secondaryColor = hw.bottom_color.blue();
                 multiplier = 1.25;
             }
-            
+
             if (dominantColor > (secondaryColor * multiplier)) {
 
                 first = new Encoders(hw);
@@ -511,14 +540,29 @@ public class AutonomousOpMode extends LinearOpMode {
             }
         }
         double start = runtime.milliseconds();
-        double timeout = 4500;
-        while (opModeIsActive() && runtime.milliseconds() - start < timeout && (drivetrain.anyIsBusy())) {
-            Encoders e = new Encoders(hw);
-
+        double timeout = 8000;
+        Encoders e;
+        e = new Encoders(hw);
+        Encoders f = new Encoders(hw);
+        int finaloffset = 150;
+        double diff;
+        boolean moving = true;
+        double previousMs = runtime.milliseconds();
+        while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
+            e = new Encoders(hw);
+            double difference = e.totalDiff(middle);
+            double avg = difference / 4;
+            if (avg < 30) {
+                break;
+            }
         }
+
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         drivetrain.stop();
     }
+
+
+
     private void crypto(int ticks, double speed, double p, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
@@ -540,7 +584,7 @@ public class AutonomousOpMode extends LinearOpMode {
             int backRightDiff = Math.abs(backRight - backRightStart);
             int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
             int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
-            
+
             double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
             double backLeftComp = (avg - backLeftDiff) * p;
             double backRightComp = (avg - backRightDiff) * p;
@@ -566,21 +610,21 @@ public class AutonomousOpMode extends LinearOpMode {
     }
 
     private void release() {
-        hw.altClawLeft.setPosition(0.530);  //0.346
-        hw.altClawRight.setPosition(0.470); //0.567
+        hw.altClawLeft.setPosition(0.29);
+        hw.altClawRight.setPosition(0.65);
     }
 
     private void jewelArms(boolean left) {
         if (left) {
-            hw.jewelArm1.setPosition(0.511);
+            hw.jewelArm1.setPosition(0.76);  // 0.511
         } else {
-            hw.jewelArm2.setPosition(0.349);
+            hw.jewelArm2.setPosition(0.34); // 0.349
         }
     }
 
     private void resetJewelArms() {
-        hw.jewelArm1.setPosition(0);
-        hw.jewelArm2.setPosition(0.888);
+        hw.jewelArm1.setPosition(0.18);
+        hw.jewelArm2.setPosition(0.85);
     }
 
     private void prestart() {

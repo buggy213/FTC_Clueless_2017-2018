@@ -34,11 +34,8 @@ import android.graphics.Color;
 import android.view.View;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.LED;
 
 /*
@@ -72,10 +69,6 @@ import com.qualcomm.robotcore.hardware.LED;
 public class SensorAdafruitRGB extends LinearOpMode {
 
   ColorSensor sensorRGB;
-
-  // we assume that the LED pin of the RGB sensor is connected to
-  // digital port 5 (zero indexed).
-  static final int LED_CHANNEL = 5;
 
   @Override
   public void runOpMode() {

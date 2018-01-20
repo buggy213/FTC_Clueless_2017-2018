@@ -92,9 +92,19 @@ public class AutonomousOpMode extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         hw = RobotHardware.GetSingleton(hardwareMap);
         RobotHardware.SetCurrentRunningOpMode(this);
-        MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
-        String mode = parameters.get("start");
+        String mode = "";
+        MatchParameters parameters = MatchParameters.current;
+        if (parameters == null) {
+            requestOpModeStop();
+        }
+        try {
+            mode = parameters.get("start");
+        }
+        catch (Exception e) {
+            requestOpModeStop();
+        }
         boolean close = mode.contains("CLOSE");
+
         boolean red = mode.contains("RED");
         drivetrain = new FourWheelMecanumDrivetrain();
         hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -166,12 +176,12 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread dropGlpyh = new Thread(motorDrop);
 
         hw.right_color.enableLed(true);
-        hw.altClawTurn.setPosition(0.48);  // center
+        hw.altClawTurn.setPosition(0.5);  // center
         hw.upperLeft.setPosition(0.03);
-        hw.upperRight.setPosition(0.91);
+        hw.upperRight.setPosition(0.89);
 
         // Wait for the game to start (driver presses PLAY)
-        this.waitForStart();
+        this.waitForStart(red, close);
         hw.upperLeft.setPosition(0.23);
         hw.upperRight.setPosition(0.77);
 
@@ -201,8 +211,8 @@ public class AutonomousOpMode extends LinearOpMode {
             // Open altClaw
             hw.altClawLeft.setPosition(0.29);  // 0.225
             hw.altClawRight.setPosition(0.65);  // 0.727
+
             sleep(1000);
-            // sleep(1000);
 
             flick(!red, red);
 
@@ -223,7 +233,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 AutoMove(0.25, 0, 1050);
                 if (red) {
                     //AutoMove(0.1, 0, 100);
-                    drivetrain.GyroTurn(0.15, -77);
+                    drivetrain.GyroTurn(0.15, -75);
                 }
                 else {
                     //AutoMove(0.1, 0, 100);
@@ -242,13 +252,13 @@ public class AutonomousOpMode extends LinearOpMode {
                 lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 425);
             }
 
-            AutoMove(0.25, 0, 240);
+            AutoMove(0.25, 0, 255);
+            AutoMove(-0.5, 0, 25);
 
             hw.linearSlideDriveMotor.setPower(0.75);
             sleep(500);
             hw.linearSlideDriveMotor.setPower(0);
 
-            AutoMove(-0.5, 0, 25);
             release();
             AutoMove(-0.5, 0, 200);
             if (vumark != Direction.FORWARD) {
@@ -275,9 +285,12 @@ public class AutonomousOpMode extends LinearOpMode {
                     drivetrain.GyroTurn(0.4, 180);
                 }
             }
-            AutoMove(-0.4, 0, 60);
+            AutoMoveByTime(-0.8, 0, 325, 2000);
+            AutoMove(0.8, 0, 100);
 
             release();
+            hw.upperLeft.setPosition(0.03);
+            hw.upperRight.setPosition(0.89);
 
             requestOpModeStop();
         }
@@ -293,6 +306,26 @@ public class AutonomousOpMode extends LinearOpMode {
         drivetrain.MoveAngle(speed, angle, 0);
 
         while (opModeIsActive()) {
+            int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
+            telemetry.addData("d1", differenceForward);
+            telemetry.addData("d2", differenceBackward);
+            telemetry.update();
+            if ((differenceBackward + differenceForward) / 2 > counts) {
+                drivetrain.stop();
+                break;
+            }
+        }
+    }
+
+    public void AutoMoveByTime(double speed, double angle, int counts, double timeout) {
+        double start = runtime.milliseconds();
+        int initialForward = hw.forwardLeft.getCurrentPosition();
+        int initialBackward = hw.backLeft.getCurrentPosition();
+
+        drivetrain.MoveAngle(speed, angle, 0);
+
+        while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
             int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
             int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
             telemetry.addData("d1", differenceForward);
@@ -627,7 +660,7 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.jewelArm2.setPosition(0.85);
     }
 
-    private void prestart() {
+    private void prestart(boolean red, boolean close) {
         RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
         if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
             telemetry.addData("VuMark", "%s visible", vuMark);
@@ -635,11 +668,12 @@ public class AutonomousOpMode extends LinearOpMode {
         } else {
             telemetry.addData("VuMark", "not visible");
         }
-
+        telemetry.addData("Red", red);
+        telemetry.addData("Close", close);
         telemetry.update();
     }
 
-    public void waitForStart() {
+    public void waitForStart(boolean red, boolean close) {
         while (!isStarted()) {
             synchronized (this) {
                 try {
@@ -649,7 +683,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     return;
                 }
             }
-            prestart();
+            prestart(red, close);
         }
     }
 }

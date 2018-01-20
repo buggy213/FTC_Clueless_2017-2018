@@ -21,7 +21,10 @@ public class MatchParameters {
     public MatchParameters() {
         parameters = new HashMap<>();
     }
-
+    public static MatchParameters current;
+    public static void initCurrentParams() {
+        current = new MatchParameters();
+    }
     public static MatchParameters loadParameters(String data) {
         //Read text from file, parse and store in a Map (Dictionary)
         MatchParameters mp = new MatchParameters();

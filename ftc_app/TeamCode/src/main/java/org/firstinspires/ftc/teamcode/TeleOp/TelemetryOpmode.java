@@ -71,7 +71,7 @@ public class TelemetryOpmode extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    Gamepad previousGamepad1 = new Gamepad();
+    // Gamepad previousGamepad1 = new Gamepad();
     // Gamepad previousGamepad2 = new Gamepad();
 
     // Constants for teleop
@@ -90,7 +90,7 @@ public class TelemetryOpmode extends LinearOpMode {
     // boolean releaseGlyphs;
     // boolean slowMode = true;
     boolean turningTowards = false;
-    boolean normalBumper = true;
+    // boolean normalBumper = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -172,13 +172,13 @@ public class TelemetryOpmode extends LinearOpMode {
                 upperClawPosition = 0;
             }
 
-            if (gamepad1.a) {
+            /*if (gamepad1.a) {
                 reverse = true;
             }
 
             if (gamepad1.b) {
                 reverse = false;
-            }
+            }*/
 
             /* turningTowards = gamepad1.x;
             if (gamepad1.x) {
@@ -195,7 +195,7 @@ public class TelemetryOpmode extends LinearOpMode {
             //}
 
             if ( (gamepad2.left_bumper && gamepad2.right_bumper) || gamepad2.b ) {
-                robot.altClawTurn.setPosition(0.48);  // center
+                robot.altClawTurn.setPosition(0.5);  // center
                 altClawTurned = 1;  // center
             }
             else if (gamepad2.left_bumper) {
@@ -205,7 +205,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 upperClawPosition = 0;
                 //wait(200);
 
-                robot.altClawTurn.setPosition(0.126); // left turn
+                robot.altClawTurn.setPosition(0.14); // left turn
                 altClawTurned = 0;  // left turn
             }
             else if (gamepad2.right_bumper) {
@@ -215,7 +215,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 upperClawPosition = 0;
                 //wait(200);
 
-                robot.altClawTurn.setPosition(0.86);  // right turn
+                robot.altClawTurn.setPosition(0.87);  // right turn
                 altClawTurned = 2;  // right turn
             }
 
@@ -283,35 +283,24 @@ public class TelemetryOpmode extends LinearOpMode {
                 }
             } */
 
-            if (gamepad1.guide && !previousGamepad1.guide) {
+            /* if (gamepad1.guide && !previousGamepad1.guide) {
                  normalBumper = !normalBumper;
-            }
+            } */
 
             if (gamepad1.dpad_left || gamepad1.left_bumper) {
                 drivetrain.setSpeedMultiplier(fastSpeed);
                 horizotalSpeedMultiplier = 1;
             }
 
-            if (normalBumper) {
-                if (gamepad1.dpad_up) {
-                    drivetrain.setSpeedMultiplier(normalSpeed);
-                    horizotalSpeedMultiplier = 1.4;
-                }
-                if (gamepad1.right_bumper) {
-                    drivetrain.setSpeedMultiplier(slowSpeed);
-                    horizotalSpeedMultiplier = 1;
-                }
+            if (gamepad1.dpad_up) {
+                drivetrain.setSpeedMultiplier(normalSpeed);
+                horizotalSpeedMultiplier = 1.4;
             }
-            else {
-                if (gamepad1.right_bumper) {
-                    drivetrain.setSpeedMultiplier(normalSpeed);
-                    horizotalSpeedMultiplier = 1.4;
-                }
-                if (gamepad1.dpad_up) {
-                    drivetrain.setSpeedMultiplier(slowSpeed);
-                    horizotalSpeedMultiplier = 1;
-                }
+            if (gamepad1.right_bumper) {
+                drivetrain.setSpeedMultiplier(slowSpeed);
+                horizotalSpeedMultiplier = 1;
             }
+
             if (gamepad1.dpad_right) {
                 drivetrain.setSpeedMultiplier(slowestSpeed);
                 horizotalSpeedMultiplier = 1.55;
@@ -330,13 +319,13 @@ public class TelemetryOpmode extends LinearOpMode {
 
             robot.linearSlideDriveMotor.setPower(linearSlideDrivePower);
 
-            try {
+            /*try {
                 previousGamepad1.copy(gamepad1);
             }
 
             catch (RobotCoreException e) {
                 RobotLog.e("Something went wrong while copying gamepads");
-            }
+            } */
 
             // telemetry.addData("Heading", robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
             // telemetry.addData("altClawTurned", altClawTurned);

@@ -1,4 +1,2 @@
-include ':opencv-java'
-
-include ':FtcRobotController'
+include ':FtcRobotController', ':openCVLibrary320', ':DogeCV'
 include ':TeamCode'

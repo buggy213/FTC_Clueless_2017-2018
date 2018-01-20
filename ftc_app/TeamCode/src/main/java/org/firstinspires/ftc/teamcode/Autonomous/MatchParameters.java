@@ -2,11 +2,14 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import android.os.Environment;
 
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -37,7 +40,23 @@ public class MatchParameters {
     }
 
     public static MatchParameters loadParametersFromDefaultLocation() {
-        return  null;
+        File file = new File(AppUtil.getDefContext().getFilesDir().getAbsolutePath() + "/Settings/matchparams.txt");
+        StringBuilder sb;
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader bufferedReader = new BufferedReader(isr);
+            sb = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+        catch (Exception e) {
+            return null;
+        }
+
+        return loadParameters(sb.toString());
     }
 
     public void put(String key, String value) {
@@ -49,6 +68,8 @@ public class MatchParameters {
     }
 
     public int getInt(String key) {
-        return Integer.valueOf(parameters.get(key));
+        return Integer.valueOf(parameters.get(key.trim()));
     }
+
+    public boolean getBool(String key) {return Boolean.valueOf(parameters.get(key.trim().toLowerCase())); }
 }

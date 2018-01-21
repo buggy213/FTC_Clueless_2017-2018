@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.*;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -29,14 +30,10 @@ public class CryptoboxOpMode extends OpMode
     @Override
     public void init() {
 
-        CameraViewDisplay.getInstance().setCurrentView(hardwareMap.appContext, );
-
         telemetry.addData("Status", "Initialized");
 
         cryptoboxDetector = new CryptoboxDetector();
-        cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-
-        cryptoboxDetector.rotateMat = false;
+        cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.BLUE);
 
         //Optional Test Code to load images via Drawables
         //cryptoboxDetector.useImportedImage = true;
@@ -61,18 +58,7 @@ public class CryptoboxOpMode extends OpMode
 
     @Override
     public void loop() {
-
-
-
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("isCryptoBoxDetected", cryptoboxDetector.isCryptoBoxDetected());
-        telemetry.addData("isColumnDetected ",  cryptoboxDetector.isColumnDetected());
-
-        telemetry.addData("Column Left ",  cryptoboxDetector.getCryptoBoxLeftPosition());
-        telemetry.addData("Column Center ",  cryptoboxDetector.getCryptoBoxCenterPosition());
-        telemetry.addData("Column Right ",  cryptoboxDetector.getCryptoBoxRightPosition());
-
-
     }
 
     /*

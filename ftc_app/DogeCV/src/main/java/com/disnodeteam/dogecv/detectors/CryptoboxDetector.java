@@ -288,7 +288,7 @@ public class CryptoboxDetector extends OpenCVPipeline {
         }
 
         ColumnDetected = true;
-        Point newFull =  Points.getMeanPoint(avgPoints);
+        Point newFull = Points.getMeanPoint(avgPoints);
         Line newFullLine = new Line(newFull, fullAvgPoint);
         if(newFullLine.length() > 75){
             trackables = new ArrayList<>();

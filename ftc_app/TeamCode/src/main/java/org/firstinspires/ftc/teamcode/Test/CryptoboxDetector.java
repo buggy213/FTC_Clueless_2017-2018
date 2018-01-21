@@ -133,7 +133,10 @@ public class CryptoboxDetector extends OpenCVPipeline{
         contours.removeAll(degenerateContours);
 
         for (Contour c : contours) {
-            
+            // Group into columns
+            // Find biggest contour in each column
+            // Figure out where the contours from the previous frame have gone using delta x center values, then update crypto state if any new contours have appeared / old ones have dropped away
+            // Mark each column and center of 2 columns for debug info
         }
 
         Imgproc.resize(debugImage, debugImage, initialSize);

@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.Test;
 
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 
 import com.disnodeteam.dogecv.OpenCVPipeline;
 import com.disnodeteam.dogecv.ViewDisplay;
 import com.disnodeteam.dogecv.filters.DogeCVColorFilter;
 import com.disnodeteam.dogecv.filters.LeviColorFilter;
 
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Test.vision.*;
 import org.opencv.core.*;
 import org.opencv.features2d.FeatureDetector;
@@ -22,11 +25,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 
+import static org.opencv.core.Core.flip;
 import static org.opencv.core.Core.mean;
+import static org.opencv.core.Core.transpose;
 import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC1;
 
-public class CryptoboxDetector extends OpenCVPipeline{
+public class CryptoboxDetector extends OpenCVPipeline {
 
     public class CryptoState {
         HashMap<Integer, ColumnState> columnStates = new HashMap<>();
@@ -47,6 +52,29 @@ public class CryptoboxDetector extends OpenCVPipeline{
         }
     }
 
+    Comparator<Contour> leftToRight = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return (int) (contour.center().x - t1.center().x);
+        }
+    };
+
+    Comparator<Contour> rightToLeft = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return -1 * (int) (contour.center().x - t1.center().x);
+        }
+    };
+
+    Comparator<Contour> area = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return (int) (contour.area() - t1.area());
+        }
+    };
+
+    List<Contour> previousFrameContours;
+
     CryptoState state = new CryptoState();
 
     public CryptoState getCurrentState() {
@@ -57,64 +85,54 @@ public class CryptoboxDetector extends OpenCVPipeline{
     final double minHeightWidthRatio = 1.2;
     final double testGapAreaFactor = 0.8;
     final int horizontalDistanceCenterThreshold = 15;
-    final int maxGap = 30;
-    final int maxDeltaX = 10;
+    final int horizontalThreshold = 50;
+    final int maxDelta = 40;
+
     DogeCVColorFilter colorFilter;
-    
+
     Mat debugImage = new Mat();
     Mat workingMat = new Mat();
     Mat mask = new Mat();
     Mat hierarchy = new Mat();
+    Mat rot = new Mat();
 
     final int minArea = 250;
 
     List<Contour> previousFrameBiggestContours;
 
     TeamColor color;
+    Direction direction;
 
-    Comparator<Contour> horizontal = new Comparator<Contour>() {
-        @Override
-        public int compare(Contour contour, Contour t1) {
-            return (int)(contour.center().x - t1.center().x);
-        }
-    };
+    boolean firstTime;
 
-    Comparator<Contour> leftToRight = new Comparator<Contour>() {
-        @Override
-        public int compare(Contour contour, Contour t1) {
-            return (int)(contour.center().x - t1.center().x);
-        }
-    };
-    Comparator<Contour> rightToLeft = new Comparator<Contour>() {
-        @Override
-        public int compare(Contour contour, Contour t1) {
-            return -1 * (int)(contour.center().x - t1.center().x);
-        }
-    };
-
-    Comparator<Contour> area = new Comparator<Contour>() {
-        @Override
-        public int compare(Contour contour, Contour t1) {
-            return (int)(contour.area() - t1.area());
-        }
-    };
-
-    Comparator<Double> absComparator = new Comparator<Double>(){
-        @Override
-        public int compare(Double i1, Double i2) {
-            return Math.abs(i1) < Math.abs(i2) ? 1 : 0;
-        }
-    };
-    
     @Override
     public Mat processFrame(Mat rgba, Mat gray) {
         detectCryptobox(rgba, gray);
+        if (!firstTime) {
+            try {
+                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                Thread.sleep(1000);
+                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                Thread.sleep(1000);
+                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            } catch (InterruptedException e) {
+                // Swallow
+            }
+            firstTime = true;
+        }
+
         return debugImage;
     }
 
     public void init(Context context, final ViewDisplay viewDisplay, final int cameraIndex, TeamColor color) {
         this.color = color;
+        if (color == TeamColor.BLUE) {
+            direction = Direction.LEFT;
+        } else {
+            direction = Direction.RIGHT;
+        }
         colorFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.RED);
+
         super.init(context, viewDisplay, cameraIndex);
     }
 
@@ -126,8 +144,8 @@ public class CryptoboxDetector extends OpenCVPipeline{
 
         workingMat.copyTo(debugImage);
 
-        Imgproc.blur(workingMat, workingMat, new Size(6,6));
-        
+        Imgproc.blur(workingMat, workingMat, new Size(6, 6));
+
         List<MatOfPoint> contourListTemp = new ArrayList<>();
         Mat convert = workingMat.clone();
         colorFilter.process(convert, mask);
@@ -178,68 +196,95 @@ public class CryptoboxDetector extends OpenCVPipeline{
                     */
                 }
             }
-            Drawing.drawText(debugImage, status + "," + score, c.center().add(new Point(0, 10)), 0.5f, Color.create(BasicColors.WHITE));
+
+            // Drawing.drawText(debugImage, status + "," + score, c.center(), 0.5f, Color.create(BasicColors.WHITE, ColorSpace.RGB));
             if (score < 0) {
                 degenerateContours.add(c);
-                Drawing.drawContour(debugImage, c, Color.create(BasicColors.RED));
-            }
-            else {
-                Drawing.drawContour(debugImage, c, Color.create(BasicColors.GREEN));
+                Drawing.drawContour(debugImage, c, Color.create(BasicColors.RED, ColorSpace.RGB));
+            } else {
+                Drawing.drawContour(debugImage, c, Color.create(BasicColors.GREEN, ColorSpace.RGB));
             }
         }
 
         contours.removeAll(degenerateContours);
-
-
-
+        // Coming from left
+        if (direction == Direction.LEFT) {
+            Collections.sort(contours, leftToRight);
+        } else {
+            Collections.sort(contours, rightToLeft);
+        }
         List<List<Contour>> contourGroups = new ArrayList<>();
-
-        Collections.sort(contours, horizontal);
         for (int i = 0; i < contours.size(); i++) {
-            // Group into columns
             if (i == contours.size() - 1) {
                 break;
             }
 
-            if (Math.abs(contours.get(i).center().x - contours.get(i + 1).center().x) < maxGap) {
+            if (Math.abs(contours.get(i).center().x - contours.get(i + 1).center().x) < horizontalThreshold) {
+
                 // Part of the same group
                 if (contourGroups.size() == 0) {
                     // First group
                     contourGroups.add(new ArrayList<Contour>());
                     contourGroups.get(0).add(contours.get(i));
                     contourGroups.get(0).add(contours.get(i + 1));
-                }
 
-                else {
+                } else {
                     contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
                 }
-            }
-            else {
+            } else {
                 // New group
                 contourGroups.add(new ArrayList<Contour>());
                 contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
             }
         }
 
-        List<Contour> biggestContours =  new ArrayList<>();
-        // Find biggest contour in each column
+        List<Contour> biggestContours = new ArrayList<>();
         for (int i = 0; i < contourGroups.size(); i++) {
             Collections.sort(contourGroups.get(i), area);
-            biggestContours.add(contourGroups.get(i).get(contourGroups.get(i).size() - 1));
-        }
-
-
-        for (int i = 0; i < biggestContours.size(); i++) {
-            Drawing.drawCircle(debugImage, biggestContours.get(i).center(), 4, Color.create(BasicColors.GREEN));
-            if (i == biggestContours.size() - 1) {
-                break;
+            for (Contour c : contourGroups.get(i)) {
+                Drawing.drawText(debugImage, String.valueOf(i + state.index), c.center(), 0.5f, Color.create(BasicColors.YELLOW));
             }
+            biggestContours.add(contourGroups.get(i).get(contourGroups.get(i).size() - 1));
+            Drawing.drawContour(debugImage, biggestContours.get(i), Color.create(BasicColors.ORANGE));
+        }
 
-            Point center = state.currentlyVisible.get(i).center().average(state.currentlyVisible.get(i + 1).center());
-            Drawing.drawCircle(debugImage, center, 4, Color.create(BasicColors.GREEN));
+        if (previousFrameContours == null) {
+            previousFrameContours = biggestContours;
+            return;
+        }
+
+        /*for (Contour c : previousFrameContours) {
+            List<Double> deltaXVals = new ArrayList<>();
+            for (Contour other : biggestContours) {
+                deltaXVals.add(c.center().x - other.center().x);
+            }
+            Collections.sort(deltaXVals);
+            if (deltaXVals.size() >= 1) {
+                if (deltaXVals.get(deltaXVals.size() - 1) > maxDelta) {
+                    // Contour has fallen off the screen
+                    state.index++;
+                }
+            }
+        }*/
+
+        int index = 0;
+        for (Contour c : biggestContours) {
+            //  Drawing.drawText(debugImage, String.valueOf(index + state.index), c.center(), 0.5f, Color.create(BasicColors.WHITE));
+        }
+        List<Double> midXVals = new ArrayList<>();
+
+        for (int i = 0; i < biggestContours.size() - 1; i++) {
+            Drawing.drawCircle(debugImage, biggestContours.get(i).center().average(biggestContours.get(i + 1).center()), 4, Color.create(BasicColors.ORANGE));
+            midXVals.add(biggestContours.get(i).center().average(biggestContours.get(i + 1).center()).x);
         }
 
 
+        // Group into columns
+        // Find biggest contour in each column
+        // Figure out where the contours from the previous frame have gone using delta x center values, then update crypto state if any new contours have appeared / old ones have dropped away
+        // Mark each column and center of 2 columns for debug info
+
+        previousFrameContours = biggestContours;
         Imgproc.resize(debugImage, debugImage, initialSize);
     }
 

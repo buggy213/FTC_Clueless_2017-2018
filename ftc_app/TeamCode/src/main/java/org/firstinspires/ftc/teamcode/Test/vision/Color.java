@@ -29,6 +29,7 @@ public abstract class Color {
         return create(s, ColorSpace.RGB);
     }
 
+
     /**
      * Create a color based on a colorspaace and a scalar value
      *

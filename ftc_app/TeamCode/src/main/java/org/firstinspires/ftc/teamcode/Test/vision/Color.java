@@ -25,6 +25,10 @@ public abstract class Color {
         setScalar(s);
     }
 
+    public static Color create(Scalar s) {
+        return create(s, ColorSpace.RGB);
+    }
+
     /**
      * Create a color based on a colorspaace and a scalar value
      *
@@ -32,6 +36,7 @@ public abstract class Color {
      * @param colorSpace Colorspace
      * @return Color instance
      */
+
     public static Color create(Scalar s, ColorSpace colorSpace) {
         Class<? extends Color> colorClass = colorSpace.getColorClass();
 

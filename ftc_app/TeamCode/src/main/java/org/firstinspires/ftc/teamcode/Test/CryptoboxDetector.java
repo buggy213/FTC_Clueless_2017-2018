@@ -14,9 +14,11 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 
@@ -27,16 +29,36 @@ import static org.opencv.core.CvType.CV_8UC1;
 public class CryptoboxDetector extends OpenCVPipeline{
 
     public class CryptoState {
-        public Queue<Contour> currentlyVisible;
-        public int leftIndex;
+        HashMap<Integer, ColumnState> columnStates = new HashMap<>();
+        public int index = 0;
+    }
+
+    public class ColumnState {
+        public int lastKnownPosition;
+        public int deltaSinceVisible;
+    }
+
+    public double getCenterPoint(int id1, int id2) {
+        if (state.columnStates.containsKey(id1) && state.columnStates.containsKey(id2)) {
+            return (state.columnStates.get(id1).lastKnownPosition + state.columnStates.get(id2).lastKnownPosition) / 2;
+        }
+        else {
+            return -1;
+        }
     }
 
     CryptoState state = new CryptoState();
+
+    public CryptoState getCurrentState() {
+        return state;
+    }
 
     final double sizeFactor = 0.5;
     final double minHeightWidthRatio = 1.2;
     final double testGapAreaFactor = 0.8;
     final int horizontalDistanceCenterThreshold = 15;
+    final int maxGap = 30;
+    final int maxDeltaX = 10;
     DogeCVColorFilter colorFilter;
     
     Mat debugImage = new Mat();
@@ -46,7 +68,43 @@ public class CryptoboxDetector extends OpenCVPipeline{
 
     final int minArea = 250;
 
+    List<Contour> previousFrameBiggestContours;
+
     TeamColor color;
+
+    Comparator<Contour> horizontal = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return (int)(contour.center().x - t1.center().x);
+        }
+    };
+
+    Comparator<Contour> leftToRight = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return (int)(contour.center().x - t1.center().x);
+        }
+    };
+    Comparator<Contour> rightToLeft = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return -1 * (int)(contour.center().x - t1.center().x);
+        }
+    };
+
+    Comparator<Contour> area = new Comparator<Contour>() {
+        @Override
+        public int compare(Contour contour, Contour t1) {
+            return (int)(contour.area() - t1.area());
+        }
+    };
+
+    Comparator<Double> absComparator = new Comparator<Double>(){
+        @Override
+        public int compare(Double i1, Double i2) {
+            return Math.abs(i1) < Math.abs(i2) ? 1 : 0;
+        }
+    };
     
     @Override
     public Mat processFrame(Mat rgba, Mat gray) {
@@ -120,24 +178,67 @@ public class CryptoboxDetector extends OpenCVPipeline{
                     */
                 }
             }
-            Drawing.drawText(debugImage, status + "," + score, c.center(), 0.5f, Color.create(BasicColors.WHITE, ColorSpace.RGB));
+            Drawing.drawText(debugImage, status + "," + score, c.center().add(new Point(0, 10)), 0.5f, Color.create(BasicColors.WHITE));
             if (score < 0) {
                 degenerateContours.add(c);
-                Drawing.drawContour(debugImage, c, Color.create(BasicColors.RED, ColorSpace.RGB));
+                Drawing.drawContour(debugImage, c, Color.create(BasicColors.RED));
             }
             else {
-                Drawing.drawContour(debugImage, c, Color.create(BasicColors.GREEN, ColorSpace.RGB));
+                Drawing.drawContour(debugImage, c, Color.create(BasicColors.GREEN));
             }
         }
 
         contours.removeAll(degenerateContours);
 
-        for (Contour c : contours) {
+
+
+        List<List<Contour>> contourGroups = new ArrayList<>();
+
+        Collections.sort(contours, horizontal);
+        for (int i = 0; i < contours.size(); i++) {
             // Group into columns
-            // Find biggest contour in each column
-            // Figure out where the contours from the previous frame have gone using delta x center values, then update crypto state if any new contours have appeared / old ones have dropped away
-            // Mark each column and center of 2 columns for debug info
+            if (i == contours.size() - 1) {
+                break;
+            }
+
+            if (Math.abs(contours.get(i).center().x - contours.get(i + 1).center().x) < maxGap) {
+                // Part of the same group
+                if (contourGroups.size() == 0) {
+                    // First group
+                    contourGroups.add(new ArrayList<Contour>());
+                    contourGroups.get(0).add(contours.get(i));
+                    contourGroups.get(0).add(contours.get(i + 1));
+                }
+
+                else {
+                    contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+                }
+            }
+            else {
+                // New group
+                contourGroups.add(new ArrayList<Contour>());
+                contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+            }
         }
+
+        List<Contour> biggestContours =  new ArrayList<>();
+        // Find biggest contour in each column
+        for (int i = 0; i < contourGroups.size(); i++) {
+            Collections.sort(contourGroups.get(i), area);
+            biggestContours.add(contourGroups.get(i).get(contourGroups.get(i).size() - 1));
+        }
+
+
+        for (int i = 0; i < biggestContours.size(); i++) {
+            Drawing.drawCircle(debugImage, biggestContours.get(i).center(), 4, Color.create(BasicColors.GREEN));
+            if (i == biggestContours.size() - 1) {
+                break;
+            }
+
+            Point center = state.currentlyVisible.get(i).center().average(state.currentlyVisible.get(i + 1).center());
+            Drawing.drawCircle(debugImage, center, 4, Color.create(BasicColors.GREEN));
+        }
+
 
         Imgproc.resize(debugImage, debugImage, initialSize);
     }

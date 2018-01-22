@@ -57,6 +57,14 @@ public class Point {
         return x == it.x && y == it.y;
     }
 
+    public Point add(Point other) {
+        return new Point(this.x + other.x, this.y + other.y);
+    }
+
+    public Point average(Point other) {
+        return new Point((this.x + other.x) / 2, (this.y + other.y) / 2);
+    }
+
     public boolean inside(Rect r) {
         return r.contains(this);
     }

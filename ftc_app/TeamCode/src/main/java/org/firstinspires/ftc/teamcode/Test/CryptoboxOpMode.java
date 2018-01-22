@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.io.IOException;
 
 
-@TeleOp(name="DogeCV Red Cryptobox Detector", group="DogeCV")
+@TeleOp(name="Crypto POC", group="DogeCV")
 
 public class CryptoboxOpMode extends OpMode
 {
@@ -35,11 +35,9 @@ public class CryptoboxOpMode extends OpMode
         cryptoboxDetector = new CryptoboxDetector();
         cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.BLUE);
 
-        //Optional Test Code to load images via Drawables
-        //cryptoboxDetector.useImportedImage = true;
-        //cryptoboxDetector.SetTestMat(com.qualcomm.ftcrobotcontroller.R.drawable.test_cv4);
-
         cryptoboxDetector.enable();
+
+
 
 
     }

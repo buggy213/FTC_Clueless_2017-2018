@@ -33,7 +33,7 @@ public class CryptoboxOpMode extends OpMode
         telemetry.addData("Status", "Initialized");
 
         cryptoboxDetector = new CryptoboxDetector();
-        cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.BLUE);
+        cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.RED);
 
         //Optional Test Code to load images via Drawables
         //cryptoboxDetector.useImportedImage = true;

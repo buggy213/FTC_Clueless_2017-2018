@@ -582,6 +582,7 @@ public class FtcRobotControllerActivity extends Activity
     }
   }
 
+
   private void requestRobotSetup() {
     if (controllerService == null) return;
 

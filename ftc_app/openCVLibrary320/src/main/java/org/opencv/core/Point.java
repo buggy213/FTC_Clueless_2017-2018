@@ -29,6 +29,10 @@ public class Point {
         }
     }
 
+    public Point average(Point other) {
+        return new Point((x + other.x) / 2, (y + other.y) / 2);
+    }
+
     public Point clone() {
         return new Point(x, y);
     }

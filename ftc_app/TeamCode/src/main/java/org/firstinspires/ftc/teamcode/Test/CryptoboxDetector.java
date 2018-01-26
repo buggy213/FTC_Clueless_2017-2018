@@ -7,6 +7,7 @@ import com.disnodeteam.dogecv.OpenCVPipeline;
 import com.disnodeteam.dogecv.ViewDisplay;
 import com.disnodeteam.dogecv.filters.DogeCVColorFilter;
 import com.disnodeteam.dogecv.filters.LeviColorFilter;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
@@ -35,12 +36,18 @@ public class CryptoboxDetector extends OpenCVPipeline {
 
     public class CryptoState {
         HashMap<Integer, ColumnState> columnStates = new HashMap<>();
-        public int index = 0;
     }
 
     public class ColumnState {
-        public int lastKnownPosition;
-        public int deltaSinceVisible;
+        public int id;
+        public double lastKnownPosition;
+        public double deltaTimeSinceVisible = 0;
+        public double nonvisibleStartTime;
+        public boolean currentlyVisible = true;
+
+        public ColumnState(double lastKnownPosition, int id) {
+            this.lastKnownPosition = lastKnownPosition;
+        }
     }
 
     public double getCenterPoint(int id1, int id2) {
@@ -88,6 +95,9 @@ public class CryptoboxDetector extends OpenCVPipeline {
     final int horizontalThreshold = 50;
     final int maxDelta = 40;
 
+    final double maxTimeNotVisible = 250;
+    ElapsedTime timer;
+
     DogeCVColorFilter colorFilter;
 
     Mat debugImage = new Mat();
@@ -96,7 +106,7 @@ public class CryptoboxDetector extends OpenCVPipeline {
     Mat hierarchy = new Mat();
     Mat rot = new Mat();
 
-    final int minArea = 250;
+    final int minArea = 400;
 
     List<Contour> previousFrameBiggestContours;
 
@@ -132,7 +142,7 @@ public class CryptoboxDetector extends OpenCVPipeline {
             direction = Direction.RIGHT;
         }
         colorFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.RED);
-
+        timer = new ElapsedTime();
         super.init(context, viewDisplay, cameraIndex);
     }
 
@@ -241,9 +251,6 @@ public class CryptoboxDetector extends OpenCVPipeline {
         List<Contour> biggestContours = new ArrayList<>();
         for (int i = 0; i < contourGroups.size(); i++) {
             Collections.sort(contourGroups.get(i), area);
-            for (Contour c : contourGroups.get(i)) {
-                Drawing.drawText(debugImage, String.valueOf(i + state.index), c.center(), 0.5f, Color.create(BasicColors.YELLOW));
-            }
             biggestContours.add(contourGroups.get(i).get(contourGroups.get(i).size() - 1));
             Drawing.drawContour(debugImage, biggestContours.get(i), Color.create(BasicColors.ORANGE));
         }
@@ -267,9 +274,10 @@ public class CryptoboxDetector extends OpenCVPipeline {
             }
         }*/
 
-        int index = 0;
+        List<Double> columnXVals = new ArrayList<>();
         for (Contour c : biggestContours) {
             //  Drawing.drawText(debugImage, String.valueOf(index + state.index), c.center(), 0.5f, Color.create(BasicColors.WHITE));
+            columnXVals.add(c.center().x);
         }
         List<Double> midXVals = new ArrayList<>();
 
@@ -278,6 +286,57 @@ public class CryptoboxDetector extends OpenCVPipeline {
             midXVals.add(biggestContours.get(i).center().average(biggestContours.get(i + 1).center()).x);
         }
 
+        List<Double> accountedFor = new ArrayList<>();
+        List<ColumnState> columnsAccountFor = new ArrayList<>();
+        for (Double d : columnXVals) {
+            for (ColumnState cs : state.columnStates.values()) {
+                if (Math.abs(d - cs.lastKnownPosition) < horizontalThreshold) {
+                    // Check for new columns
+                    accountedFor.add(d);
+                    columnsAccountFor.add(cs);
+                    cs.currentlyVisible = true;
+                    cs.deltaTimeSinceVisible = 0;
+                    cs.lastKnownPosition = d;
+                }
+            }
+        }
+
+        List<Double> unaccountedFor = new ArrayList<>(midXVals);
+        unaccountedFor.removeAll(accountedFor);
+
+        if (direction == Direction.RIGHT) {
+            Collections.sort(unaccountedFor, Collections.reverseOrder());
+        }
+        else {
+            Collections.sort(unaccountedFor);
+        }
+
+
+        for (Double d : unaccountedFor) {
+            // New columns!
+            if (state.columnStates.size() == 0) {
+                state.columnStates.put(0, new ColumnState(d, 0));
+            }
+            else {
+                state.columnStates.put(Collections.max(state.columnStates.keySet()) + 1, new ColumnState(d, Collections.max(state.columnStates.keySet()) + 1));
+            }
+        }
+
+        List<ColumnState> columnsUnaccountFor = new ArrayList<>(state.columnStates.values());
+        columnsUnaccountFor.removeAll(columnsAccountFor);
+        for (ColumnState columnState : columnsUnaccountFor) {
+            // Check if any columns have left screen (possibly temporarily) and cull any that have been offscreen for too long
+            if (columnState.currentlyVisible) {
+                columnState.currentlyVisible = false;
+                columnState.nonvisibleStartTime = timer.milliseconds();
+            }
+
+            columnState.deltaTimeSinceVisible = timer.milliseconds() - columnState.nonvisibleStartTime;
+
+            if (columnState.deltaTimeSinceVisible > maxTimeNotVisible) {
+                state.columnStates.remove(columnState.id);
+            }
+        }
 
         // Group into columns
         // Find biggest contour in each column

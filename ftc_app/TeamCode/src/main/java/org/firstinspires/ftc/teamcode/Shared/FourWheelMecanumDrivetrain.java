@@ -270,7 +270,6 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         double intermediateSin = sin(desiredAngle);
         double intermediateCos = cos(desiredAngle);
 
-
         double leftForward = speed * (intermediateSin) + (vRot * rotSpeed / speedMultiplier);
         double leftBackward = speed * (intermediateCos) + (vRot * rotSpeed / speedMultiplier);
         double rightForward = speed * (intermediateCos) - (vRot * rotSpeed / speedMultiplier);

@@ -48,9 +48,9 @@ public class Test extends OpMode {
         servoPos2 += 0.05 * deltaTime * gamepad1.right_stick_y;
         servoPos3 += 0.05 * deltaTime * gamepad1.left_trigger;
 
-        leftClaw.setPosition(servoPos1);
-        rightClaw.setPosition(servoPos2);
-        turnClaw.setPosition(servoPos3);
+        //leftClaw.setPosition(servoPos1);
+        //rightClaw.setPosition(servoPos2);
+        //turnClaw.setPosition(servoPos3);
         telemetry.addData("Servo 1", servoPos1);
         telemetry.addData("Servo 2", servoPos2);
         telemetry.addData("Servo 3", servoPos3);

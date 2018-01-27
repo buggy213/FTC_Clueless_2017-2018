@@ -76,10 +76,12 @@ public class TelemetryOpmode extends LinearOpMode {
 
     // Constants for teleop
     final double turnSpeed = 0.6;
-    final double fastSpeed = 1;
-    final double slowSpeed = 0.8;
+    final double fastSpeed = 0.85;
+    final double normalSpeed = 0.5;
+    final double slowSpeed = 0.5;
+    final double slowestSpeed = 0.2;
 
-    //double horizotalSpeedMultiplier = 1;
+    double horizotalSpeedMultiplier = 1;
     boolean reverse = false;
     int altClawPosition = 1;
     int upperClawPosition = 0;
@@ -127,24 +129,13 @@ public class TelemetryOpmode extends LinearOpMode {
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0) && !turningTowards) {
 
                 double speed = 1;
-                /* if (gamepad1.right_stick_y == 0) {
+                if (gamepad1.right_stick_y == 0) {
                     speed = 1.25 * horizotalSpeedMultiplier ;
+                    //speed = 1.25 ;
                 }
-                if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
-                    speed = 0;
-                } */
 
                 if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
                     speed = 0;
-                }
-                else if ( gamepad1.right_stick_y == 0 ) {
-                    speed = Math.abs(gamepad1.left_stick_x) ;
-                }
-                else if ( gamepad1.left_stick_x == 0 ) {
-                    speed = Math.abs(gamepad1.right_stick_y) ;
-                }
-                else {
-                    speed = ( Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y) ) / 2;
                 }
 
                 double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
@@ -152,6 +143,8 @@ public class TelemetryOpmode extends LinearOpMode {
             } else {
                 drivetrain.stop();
             }
+            //endregion
+
 
             if (gamepad2.dpad_right) {
                 altClawPosition = 0;  // Complete closed
@@ -279,11 +272,36 @@ public class TelemetryOpmode extends LinearOpMode {
                     break;
             }
 
-            if (gamepad1.left_bumper) {
+            // Toggle drive speed by comparing current and previous left_bumper status
+            /* if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
+                slowMode = !slowMode;
+                if (slowMode) {
+                    drivetrain.setSpeedMultiplier(slowSpeed);
+                }
+                else {
+                    drivetrain.setSpeedMultiplier(fastSpeed);
+                }
+            } */
+
+            /* if (gamepad1.guide && !previousGamepad1.guide) {
+                 normalBumper = !normalBumper;
+            } */
+
+            if (gamepad1.dpad_left || gamepad1.left_bumper) {
                 drivetrain.setSpeedMultiplier(fastSpeed);
+                horizotalSpeedMultiplier = 1;
+            }
+            if (gamepad1.dpad_up) {
+                drivetrain.setSpeedMultiplier(slowSpeed);
+                horizotalSpeedMultiplier = 1.12;
             }
             if (gamepad1.right_bumper) {
-                drivetrain.setSpeedMultiplier(slowSpeed);
+                drivetrain.setSpeedMultiplier(normalSpeed);
+                horizotalSpeedMultiplier = 0.8;
+            }
+            if (gamepad1.dpad_right) {
+                drivetrain.setSpeedMultiplier(slowestSpeed);
+                horizotalSpeedMultiplier = 1.55;
             }
 
             if (gamepad2.guide || gamepad2.back) {

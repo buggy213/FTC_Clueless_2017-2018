@@ -23,7 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import static org.opencv.core.Core.flip;
@@ -35,18 +37,22 @@ import static org.opencv.core.CvType.CV_8UC1;
 public class CryptoboxDetector extends OpenCVPipeline {
 
     public class CryptoState {
-        HashMap<Integer, ColumnState> columnStates = new HashMap<>();
+        LinkedHashMap<Integer, ColumnState> columnStates = new LinkedHashMap<>();
+        int index = 0;
     }
 
     public class ColumnState {
-        public int id;
         public double lastKnownPosition;
-        public double deltaTimeSinceVisible = 0;
-        public double nonvisibleStartTime;
-        public boolean currentlyVisible = true;
+        final int tolerance = 50;
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof ColumnState))
+                return false;
+            return Math.abs(((ColumnState)o).lastKnownPosition - lastKnownPosition) < tolerance;
+        }
 
-        public ColumnState(double lastKnownPosition, int id) {
-            this.lastKnownPosition = lastKnownPosition;
+        public ColumnState (double initialPosition) {
+            lastKnownPosition = initialPosition;
         }
     }
 
@@ -286,62 +292,30 @@ public class CryptoboxDetector extends OpenCVPipeline {
             midXVals.add(biggestContours.get(i).center().average(biggestContours.get(i + 1).center()).x);
         }
 
-        List<Double> accountedFor = new ArrayList<>();
-        List<ColumnState> columnsAccountFor = new ArrayList<>();
-        for (Double d : columnXVals) {
-            for (ColumnState cs : state.columnStates.values()) {
-                if (Math.abs(d - cs.lastKnownPosition) < horizontalThreshold) {
-                    // Check for new columns
-                    accountedFor.add(d);
-                    columnsAccountFor.add(cs);
-                    cs.currentlyVisible = true;
-                    cs.deltaTimeSinceVisible = 0;
-                    cs.lastKnownPosition = d;
+        // Update to find new positions of tracked objects
+        for (ColumnState columnState : state.columnStates.values()) {
+            for (Double xVal : columnXVals) {
+                if (Math.abs(xVal-columnState.lastKnownPosition) < columnState.tolerance) {
+                    columnState.lastKnownPosition = xVal;
                 }
             }
         }
-
-        List<Double> unaccountedFor = new ArrayList<>(midXVals);
-        unaccountedFor.removeAll(accountedFor);
-
-        if (direction == Direction.RIGHT) {
-            Collections.sort(unaccountedFor, Collections.reverseOrder());
-        }
-        else {
-            Collections.sort(unaccountedFor);
-        }
-
-
-        for (Double d : unaccountedFor) {
-            // New columns!
-            if (state.columnStates.size() == 0) {
-                state.columnStates.put(0, new ColumnState(d, 0));
-            }
-            else {
-                state.columnStates.put(Collections.max(state.columnStates.keySet()) + 1, new ColumnState(d, Collections.max(state.columnStates.keySet()) + 1));
-            }
-        }
-
-        List<ColumnState> columnsUnaccountFor = new ArrayList<>(state.columnStates.values());
-        columnsUnaccountFor.removeAll(columnsAccountFor);
-        for (ColumnState columnState : columnsUnaccountFor) {
-            // Check if any columns have left screen (possibly temporarily) and cull any that have been offscreen for too long
-            if (columnState.currentlyVisible) {
-                columnState.currentlyVisible = false;
-                columnState.nonvisibleStartTime = timer.milliseconds();
+        // Detect if any major contours don't have a column associated with them
+        for (Double xVal : columnXVals) {
+            boolean hasAColumn = false;
+            for (ColumnState columnState : state.columnStates.values()) {
+                if (Math.abs(columnState.lastKnownPosition - xVal) < columnState.tolerance) {
+                    hasAColumn = true;
+                }
             }
 
-            columnState.deltaTimeSinceVisible = timer.milliseconds() - columnState.nonvisibleStartTime;
-
-            if (columnState.deltaTimeSinceVisible > maxTimeNotVisible) {
-                state.columnStates.remove(columnState.id);
+            if (!hasAColumn) {
+                state.columnStates.put(state.index++, new ColumnState(xVal));
             }
         }
-
-        // Group into columns
-        // Find biggest contour in each column
-        // Figure out where the contours from the previous frame have gone using delta x center values, then update crypto state if any new contours have appeared / old ones have dropped away
-        // Mark each column and center of 2 columns for debug info
+        for (int i = 0; i < state.columnStates.size(); i++) {
+            Drawing.drawText(debugImage, String.valueOf(i), new Point(state.columnStates.get(i).lastKnownPosition, 500), 0.5f, Color.create(BasicColors.GREEN));
+        }
 
         previousFrameContours = biggestContours;
         Imgproc.resize(debugImage, debugImage, initialSize);

@@ -331,10 +331,10 @@ public class AutonomousOpMode extends LinearOpMode {
                     visionCrypto(0.1, 0.0003, Direction.LEFT, vumark);*/
                     switch (vumark) {
                         case LEFT:
-                            moveHorizontal(0.1, 0.0003, 1135, Direction.LEFT);
+                            moveHorizontal(0.1, 0.0003, 1095, Direction.LEFT);
                             break;
                         case FORWARD:
-                            moveHorizontal(0.1, 0.0003, 695, Direction.LEFT);
+                            moveHorizontal(0.1, 0.0003, 655, Direction.LEFT);
                             break;
                         case RIGHT:
                             moveHorizontal(0.1, 0.0003, 300, Direction.LEFT);

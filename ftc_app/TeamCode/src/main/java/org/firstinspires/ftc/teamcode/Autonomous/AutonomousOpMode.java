@@ -125,10 +125,10 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         resetJewelArms();
 
-        if (hw.imu == null) {
+        /*if (hw.imu == null) {
             hw.ReinitializeIMU();
         }
-        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
+        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);*/
         resetJewelArms();
 
         //region Vuforia/Vision
@@ -303,10 +303,6 @@ public class AutonomousOpMode extends LinearOpMode {
                             break;
                     }
                     drivetrain.GyroTurn(0.15, -90);
-                    /*AutoMove(0.25, 0, 1170);
-                    drivetrain.GyroTurn(0.15, -90);
-                    detector.passThrough = false;
-                    visionCrypto(0.1, 0.0003, Direction.LEFT, vumark);*/
                 }
                 else {
                     switch (vumark) {

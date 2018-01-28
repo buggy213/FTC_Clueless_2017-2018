@@ -167,13 +167,13 @@ public class AutonomousOpMode extends LinearOpMode {
             else {
                 times = 0;
             }
-            if (times > 10) {
+            if (times > 5) {
                 break;
             }
             telemetry.addData("Order: ", order.toString());
-            telemetry.addData("Reliability Check", times + "/10");
+            telemetry.addData("Reliability Check", times + "/5");
             telemetry.update();
-            this.sleep(300);
+            this.sleep(50);
         }
 
         jewels.disable();
@@ -887,7 +887,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
     private void prestart(boolean red, boolean close) {
         int times = 0;
-        while (times < 10) {
+        while (times < 5) {
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
                 telemetry.addData("VuMark", "%s visible", vuMark);
@@ -904,9 +904,9 @@ public class AutonomousOpMode extends LinearOpMode {
             }
             telemetry.addData("Red", red);
             telemetry.addData("Close", close);
-            telemetry.addData("Reliability check", times + "/10");
+            telemetry.addData("Reliability check", times + "/5");
             telemetry.update();
-            sleep(300);
+            sleep(50);
         }
     }
 

@@ -36,7 +36,7 @@ public class CryptoboxOpMode extends OpMode
         cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.RED);
 
         cryptoboxDetector.enable();
-
+        cryptoboxDetector.passThrough = false;
 
 
 

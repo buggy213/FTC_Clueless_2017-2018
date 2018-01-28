@@ -88,7 +88,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             MoveAngle(0, 0, -speed);
         }
 
-        while (RobotHardware.GetCurrentRunningOpMode().opModeIsActive()) {
+        while (true) {
             double angle1 = normalize(angle + turnThreshold);
             double angle2 = normalize(angle - turnThreshold);
             double target = normalize(getHeading());

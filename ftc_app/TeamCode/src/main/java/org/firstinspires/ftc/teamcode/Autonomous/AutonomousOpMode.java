@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.detectors.JewelDetector;
 import com.qualcomm.hardware.adafruit.AdafruitI2cColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -47,10 +49,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.Shared.ClosableVuforiaLocalizer;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 import org.firstinspires.ftc.teamcode.Shared.VL53L0X;
+import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
 import org.opencv.core.Mat;
 
 
@@ -79,14 +83,14 @@ public class AutonomousOpMode extends LinearOpMode {
     FourWheelMecanumDrivetrain drivetrain;
 
     // Stores instance of Vuforia Localizer
-    VuforiaLocalizer vuforia;
-
+    ClosableVuforiaLocalizer vuforia;
+    
     // Instance of relic trackable
     VuforiaTrackable relicTemplate;
 
     RelicRecoveryVuMark lastKnownVumark = RelicRecoveryVuMark.UNKNOWN;
 
-    double distanceThreshold;
+    CryptoboxDetector detector;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -113,32 +117,72 @@ public class AutonomousOpMode extends LinearOpMode {
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         if (red) {
-            hw.phoneServo2.setPosition(0.62);
+            hw.phoneServo2.setPosition(0.67); // 0.64
         }
         else {
-            hw.phoneServo1.setPosition(0.1);
+            hw.phoneServo1.setPosition(0.16);  // 0.27
         }
         resetJewelArms();
 
-        // MatchParameters parameters = MatchParameters.loadParameters(FtcRobotControllerActivity.matchParameterData);
         if (hw.imu == null) {
             hw.ReinitializeIMU();
         }
         hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
         resetJewelArms();
-        resetFlickers();
 
-        //region Vuforia
+        //region Vuforia/Vision
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        JewelDetector jewels = new JewelDetector();
+        jewels.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+
+        //Jewel Detector Settings
+        jewels.areaWeight = 0.02;
+        jewels.detectionMode = JewelDetector.JewelDetectionMode.MAX_AREA; // PERFECT_AREA
+        //jewels.perfectArea = 6500; <- Needed for PERFECT_AREA
+        jewels.debugContours = true;
+        jewels.maxDiffrence = 15;
+        jewels.ratioWeight = 15;
+        jewels.minArea = 700;
+        jewels.rotateMat = red;
+
+        jewels.enable();
+
+
+        int times = 0; // Make sure the jewel detector is confident
+        JewelDetector.JewelOrder order = JewelDetector.JewelOrder.UNKNOWN;
+
+        while(true) {
+            if (jewels.getCurrentOrder() != JewelDetector.JewelOrder.UNKNOWN) {
+                if (order != jewels.getCurrentOrder()) {
+                    order = jewels.getCurrentOrder();
+                    times = 0;
+                }
+                else {
+                    times++;
+                }
+            }
+            else {
+                times = 0;
+            }
+            if (times > 10) {
+                break;
+            }
+            telemetry.addData("Order: ", order.toString());
+            telemetry.addData("Reliability Check", times + "/10");
+            telemetry.update();
+            this.sleep(300);
+        }
+
+        jewels.disable();
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
         vuforiaParameters.vuforiaLicenseKey = "ASK0CtX/////AAAAGbyNvvxXMUrohVJwXgMBW5Iqmz//UVeASb2KC//wHTXPuoN/gOM0vbw91nX++j+iS98pzeEfO+p9jpijt7j6VgQZlFTO9K2HjwAvTmG5M6CYglrh0B3kfA/nZx/NSyyxWIRe7Q03DeNDH50ZnSJ3I4FkyD7AbcTbJHg3LjL72N6/Lfm5biUbhOPoeQb1a8qUaqp1Il340pGFEvIEH8s7nhqHAga3TSdvM7yWxqRtZ3Bv2yEmIFMIWuBdEV6ahooWDsnnRmSn33bQVRD+KTNNocJWkwQ1pDG/8XBzswiICKBvcCvzklZhV/TeoJDk6tagk8sMcYxBdzMtyBlYVA9y3iJRyuzu+UMfswmSlA6CnmM/";
 
         vuforiaParameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(vuforiaParameters);
+        this.vuforia = new ClosableVuforiaLocalizer(vuforiaParameters);
 
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         relicTemplate = relicTrackables.get(0);
@@ -164,7 +208,7 @@ public class AutonomousOpMode extends LinearOpMode {
             public void run() {
                 try {
                     hw.linearSlideDriveMotor.setPower(0.75);
-                    Thread.sleep(1000);
+                    Thread.sleep(750);
                     hw.linearSlideDriveMotor.setPower(0);
                 } catch (InterruptedException e) {
 
@@ -175,14 +219,22 @@ public class AutonomousOpMode extends LinearOpMode {
         Thread liftGlyph = new Thread(motorLift);
         Thread dropGlpyh = new Thread(motorDrop);
 
-        hw.right_color.enableLed(true);
         hw.altClawTurn.setPosition(0.5);  // center
-        hw.upperLeft.setPosition(0.03);
-        hw.upperRight.setPosition(0.89);
+        hw.upperLeft.setPosition(0.05);
+        hw.upperRight.setPosition(0.90);
 
         // Wait for the game to start (driver presses PLAY)
-        this.waitForStart(red, close);
-        hw.upperLeft.setPosition(0.23);
+        prestart(red, close);
+        telemetry.addData("All systems nominal", "Standing by for liftoff");
+        waitForStart();
+
+        resetFlickers();
+
+        vuforia.close();
+        detector = new CryptoboxDetector();
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        detector.enable();
+        hw.upperLeft.setPosition(0.19);
         hw.upperRight.setPosition(0.77);
 
         runtime.reset();
@@ -204,21 +256,27 @@ public class AutonomousOpMode extends LinearOpMode {
 
             jewelArms(!red);
 
+            if (red) {
+                // hw.phoneServo2.setPosition(0.26); // 0.64
+            }
+            else {
+                hw.phoneServo1.setPosition(0.27);  // 0.27
+            }
+
             hw.linearSlideDriveMotor.setPower(-0.75);
-            sleep(500);
+            sleep(1200);
             hw.linearSlideDriveMotor.setPower(0);
 
             // Open altClaw
             hw.altClawLeft.setPosition(0.29);  // 0.225
             hw.altClawRight.setPosition(0.65);  // 0.727
 
-            sleep(1000);
-
-            flick(!red, red);
+            flick(!red, order);
+            sleep(500);
 
             dropGlpyh.start();
 
-            sleep(1000);
+            sleep(750);
 
             resetJewelArms();
             resetFlickers();
@@ -229,31 +287,77 @@ public class AutonomousOpMode extends LinearOpMode {
             sleep(500);
             liftGlyph.start();
             sleep(1200);
+
             if (close) {
-                AutoMove(0.25, 0, 1050);
                 if (red) {
-                    //AutoMove(0.1, 0, 100);
-                    drivetrain.GyroTurn(0.15, -75);
+                    switch (vumark) {
+                        case LEFT:
+                            AutoMove(0.25, 0, 1170);
+                            break;
+                        case FORWARD:
+                            AutoMove(0.25, 0, 1502);
+                            break;
+                        case RIGHT:
+                            AutoMove(0.25, 0, 1834);
+                            break;
+                    }
+                    drivetrain.GyroTurn(0.15, -90);
+                    /*AutoMove(0.25, 0, 1170);
+                    drivetrain.GyroTurn(0.15, -90);
+                    detector.passThrough = false;
+                    visionCrypto(0.1, 0.0003, Direction.LEFT, vumark);*/
                 }
                 else {
-                    //AutoMove(0.1, 0, 100);
+                    switch (vumark) {
+                        case LEFT:
+                            AutoMove(0.25, 0, 1223);
+                            break;
+                        case FORWARD:
+                            AutoMove(0.25, 0, 1567);
+                            break;
+                        case RIGHT:
+                            AutoMove(0.25, 0, 1909);
+                            break;
+                    }
                     drivetrain.GyroTurn(0.15, 90);
                 }
-                AutoMove(0.15, 0, 20);
             }
             else {
-                AutoMove(0.25, 0, 1080);
-                sleep(300);
-            }
-            if (red) {
-                lightCrypto(0.1, 0.0003, Direction.LEFT, vumark, !red, 425);
-            }
-            else {
-                lightCrypto(0.1, 0.0003, Direction.RIGHT, vumark, !red, 425);
+                AutoMove(0.25, 0, 1050);
+
+                if (red) {
+                    /*moveHorizontal(0.15, 0.0003, 300, Direction.LEFT);
+                    visionCrypto(0.1, 0.0003, Direction.LEFT, vumark);*/
+                    switch (vumark) {
+                        case LEFT:
+                            moveHorizontal(0.1, 0.0003, 1175, Direction.LEFT);
+                            break;
+                        case FORWARD:
+                            moveHorizontal(0.1, 0.0003, 735, Direction.LEFT);
+                            break;
+                        case RIGHT:
+                            moveHorizontal(0.1, 0.0003, 300, Direction.LEFT);
+                            break;
+                    }
+                }
+                else {
+                    switch (vumark) {
+                        case LEFT:
+                            moveHorizontal(0.1, 0.0003, 200, Direction.RIGHT);
+                            break;
+                        case FORWARD:
+                            moveHorizontal(0.1, 0.0003, 635, Direction.RIGHT);
+                            break;
+                        case RIGHT:
+                            moveHorizontal(0.1, 0.0003, 1075, Direction.RIGHT);
+                            break;
+                    }
+                }
             }
 
-            AutoMove(0.25, 0, 255);
-            AutoMove(-0.5, 0, 25);
+
+            AutoMove(0.25, 0, 275);
+            AutoMove(-0.25, 0, 25);
 
             hw.linearSlideDriveMotor.setPower(0.75);
             sleep(500);
@@ -285,12 +389,12 @@ public class AutonomousOpMode extends LinearOpMode {
                     drivetrain.GyroTurn(0.4, 180);
                 }
             }
-            AutoMoveByTime(-0.8, 0, 325, 2000);
+            AutoMoveByTime(-0.8, 0, 370, 2000);
             AutoMove(0.8, 0, 100);
 
             release();
-            hw.upperLeft.setPosition(0.03);
-            hw.upperRight.setPosition(0.89);
+            hw.upperLeft.setPosition(0.05);
+            hw.upperRight.setPosition(0.90);
 
             requestOpModeStop();
         }
@@ -305,7 +409,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
         drivetrain.MoveAngle(speed, angle, 0);
 
-        while (opModeIsActive()) {
+        while (true) {
             int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
             int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
             telemetry.addData("d1", differenceForward);
@@ -338,55 +442,30 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
-    public void flick(boolean left, boolean red) {
+    public void flick(boolean left, JewelDetector.JewelOrder order) {
+
         if (left) {
-            if (hw.left_color.red() > hw.left_color.blue() * 1.25) {
-                if (red) {
-                    // Flick forward
-                    hw.leftFlick.setPosition(0);
-                }
-                else {
-                    // Flick back
-                    hw.leftFlick.setPosition(1);
-                }
+            if (order == JewelDetector.JewelOrder.RED_BLUE) {
+                hw.leftFlick.setPosition(1); // Flick back
             }
             else {
-                if (red) {
-                    // Flick back
-                    hw.leftFlick.setPosition(1);
-                }
-                else {
-                    // Flick forward
-                    hw.leftFlick.setPosition(0);
-                }
+                hw.leftFlick.setPosition(0); // Flick forward
             }
         }
         else {
-            if (hw.right_color.red() > hw.right_color.blue() * 1.25) {
-                if (red) {
-                    // Flick back
-                    hw.rightFlick.setPosition(1);
-                }
-                else {
-                    // Flick forward
-                    hw.rightFlick.setPosition(0);
-                }
+            if (order == JewelDetector.JewelOrder.RED_BLUE) {
+                // Flick back
+                hw.rightFlick.setPosition(0);
             }
             else {
-                if (red) {
-                    // Flick forward
-                    hw.rightFlick.setPosition(0);
-                }
-                else {
-                    // Flick back
-                    hw.rightFlick.setPosition(1);
-                }
+                // Flick forward
+                hw.rightFlick.setPosition(1);
             }
         }
     }
 
     void resetFlickers() {
-        hw.leftFlick.setPosition(0.38);
+        hw.leftFlick.setPosition(0.42);
         hw.rightFlick.setPosition(0.50);
     }
 
@@ -461,7 +540,152 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         return null;
     }
+    private void moveHorizontal(double speed, double p, double amount, Direction direction) {
+        int backLeftStart = hw.backLeft.getCurrentPosition();
+        int backRightStart = hw.backRight.getCurrentPosition();
+        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
+        int forwardRightStart = hw.forwardRight.getCurrentPosition();
 
+        while (opModeIsActive()) {
+            int backLeft = hw.backLeft.getCurrentPosition();
+            int backRight = hw.backRight.getCurrentPosition();
+            int forwardLeft = hw.forwardLeft.getCurrentPosition();
+            int forwardRight = hw.forwardRight.getCurrentPosition();
+
+            int backLeftDiff = Math.abs(backLeft - backLeftStart);
+            int backRightDiff = Math.abs(backRight - backRightStart);
+            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
+            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
+
+            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+            double backLeftComp = (avg - backLeftDiff) * p;
+            double backRightComp = (avg - backRightDiff) * p;
+            double forwardLeftComp = (avg - forwardLeftDiff) * p;
+            double forwardRightComp = (avg - forwardRightDiff) * p;
+
+            if (avg >= amount) {
+                break;
+            }
+            switch (direction) {
+                case LEFT:
+                    hw.forwardRight.setPower(speed + forwardRightComp);
+                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
+                    hw.backRight.setPower(-speed - backRightComp);
+                    hw.backLeft.setPower(speed + backLeftComp);
+                    break;
+                case RIGHT:
+                    hw.forwardRight.setPower(-speed - forwardRightComp);
+                    hw.forwardLeft.setPower(speed + forwardLeftComp);
+                    hw.backRight.setPower(speed + backRightComp);
+                    hw.backLeft.setPower(-speed - backLeftComp);
+                    break;
+
+            }
+        }
+
+        drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        drivetrain.stop();
+    }
+
+    private void visionCrypto(double speed, double p, Direction direction, Direction desired) {
+        boolean blue = direction == Direction.RIGHT;
+        int backLeftStart = hw.backLeft.getCurrentPosition();
+        int backRightStart = hw.backRight.getCurrentPosition();
+        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
+        int forwardRightStart = hw.forwardRight.getCurrentPosition();
+
+        int id1 = 0;
+        int id2 = 0;
+        boolean specialMode = false;
+        if (blue) {
+            switch(desired) {
+                case LEFT:
+                    specialMode = true;
+                    break;
+                case RIGHT:
+                    id1 = 1;
+                    id2 = 2;
+                    break;
+                case FORWARD:
+                    id1 = 0;
+                    id2 = 1;
+                    break;
+            }
+        }
+        else {
+            switch(desired) {
+                case LEFT:
+                    id1 = 1;
+                    id2 = 2;
+                    break;
+                case RIGHT:
+                    specialMode = true;
+                    break;
+                case FORWARD:
+                    id1 = 0;
+                    id2 = 1;
+                    break;
+            }
+        }
+        if (specialMode) {
+            return;
+        }
+        else {
+            while (opModeIsActive()) {
+
+                if (detector.getCenterPoint(id1, id2) != -1) {
+                    telemetry.addData("Detected -- Screen Fraction", detector.getCenterPoint(id1, id2) / detector.frameSize.width);
+                    RobotLog.i(String.valueOf(detector.getCenterPoint(id1, id2) / detector.frameSize.width));
+                    telemetry.update();
+                    // Two desired columns are detected
+                    if (direction == Direction.LEFT) {
+                        if (detector.getCenterPoint(id1, id2) / detector.frameSize.width > 0.40) {
+                            break;
+                        }
+                    }
+                    else {
+                        if (detector.getCenterPoint(id1, id2) / detector.frameSize.width < 0.60) {
+                            break;
+                        }
+                    }
+                }
+                int backLeft = hw.backLeft.getCurrentPosition();
+                int backRight = hw.backRight.getCurrentPosition();
+                int forwardLeft = hw.forwardLeft.getCurrentPosition();
+                int forwardRight = hw.forwardRight.getCurrentPosition();
+
+                int backLeftDiff = Math.abs(backLeft - backLeftStart);
+                int backRightDiff = Math.abs(backRight - backRightStart);
+                int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
+                int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
+
+                double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+                double backLeftComp = (avg - backLeftDiff) * p;
+                double backRightComp = (avg - backRightDiff) * p;
+                double forwardLeftComp = (avg - forwardLeftDiff) * p;
+                double forwardRightComp = (avg - forwardRightDiff) * p;
+
+                switch (direction) {
+                    case LEFT:
+                        hw.forwardRight.setPower(speed + forwardRightComp);
+                        hw.forwardLeft.setPower(-speed - forwardLeftComp);
+                        hw.backRight.setPower(-speed - backRightComp);
+                        hw.backLeft.setPower(speed + backLeftComp);
+                        break;
+                    case RIGHT:
+                        hw.forwardRight.setPower(-speed - forwardRightComp);
+                        hw.forwardLeft.setPower(speed + forwardLeftComp);
+                        hw.backRight.setPower(speed + backRightComp);
+                        hw.backLeft.setPower(-speed - backLeftComp);
+                        break;
+
+                }
+            }
+
+            drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            drivetrain.stop();
+        }
+    }
     private void lightCrypto(double speed, double p, Direction direction, Direction desired, boolean blue, int offset) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
@@ -657,20 +881,32 @@ public class AutonomousOpMode extends LinearOpMode {
 
     private void resetJewelArms() {
         hw.jewelArm1.setPosition(0.18);
-        hw.jewelArm2.setPosition(0.85);
+        hw.jewelArm2.setPosition(0.95);
     }
 
     private void prestart(boolean red, boolean close) {
-        RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-        if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-            telemetry.addData("VuMark", "%s visible", vuMark);
-            lastKnownVumark = vuMark;
-        } else {
-            telemetry.addData("VuMark", "not visible");
+        int times = 0;
+        while (times < 10) {
+            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                telemetry.addData("VuMark", "%s visible", vuMark);
+                if (lastKnownVumark == vuMark) {
+                    times++;
+                }
+                else {
+                    lastKnownVumark = vuMark;
+                    times = 0;
+                }
+            } else {
+                times = 0;
+                telemetry.addData("VuMark", "not visible");
+            }
+            telemetry.addData("Red", red);
+            telemetry.addData("Close", close);
+            telemetry.addData("Reliability check", times + "/10");
+            telemetry.update();
+            sleep(300);
         }
-        telemetry.addData("Red", red);
-        telemetry.addData("Close", close);
-        telemetry.update();
     }
 
     public void waitForStart(boolean red, boolean close) {
@@ -683,7 +919,6 @@ public class AutonomousOpMode extends LinearOpMode {
                     return;
                 }
             }
-            prestart(red, close);
         }
     }
 }

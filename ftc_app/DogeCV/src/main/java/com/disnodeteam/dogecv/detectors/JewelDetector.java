@@ -81,11 +81,7 @@ public class JewelDetector extends OpenCVPipeline {
         Imgproc.resize(workingMat, workingMat,newSize);
 
         if(rotateMat){
-            Mat tempBefore = workingMat.t();
-
-            Core.flip(tempBefore, workingMat, -1); //mRgba.t() is the transpose
-
-            tempBefore.release();
+            Core.flip(workingMat, workingMat, -1);
         }
 
         Mat redConvert = workingMat.clone();

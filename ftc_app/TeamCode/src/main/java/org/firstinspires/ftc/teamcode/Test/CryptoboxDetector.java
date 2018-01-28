@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,10 @@ import static org.opencv.core.CvType.CV_8UC1;
 
 public class CryptoboxDetector extends OpenCVPipeline {
 
+    public boolean passThrough = true;
+
+    public Size frameSize = new Size(640, 360); // Default is (1/2)^2 of 1280x720
+
     public class CryptoState {
         LinkedHashMap<Integer, ColumnState> columnStates = new LinkedHashMap<>();
         int index = 0;
@@ -43,6 +48,8 @@ public class CryptoboxDetector extends OpenCVPipeline {
 
     public class ColumnState {
         public double lastKnownPosition;
+        public int framesSinceVisible;
+        public int id;
         final int tolerance = 50;
         @Override
         public boolean equals(Object o) {
@@ -51,14 +58,16 @@ public class CryptoboxDetector extends OpenCVPipeline {
             return Math.abs(((ColumnState)o).lastKnownPosition - lastKnownPosition) < tolerance;
         }
 
-        public ColumnState (double initialPosition) {
+        public ColumnState (double initialPosition, int id) {
             lastKnownPosition = initialPosition;
+            this.id = id;
         }
     }
 
     public double getCenterPoint(int id1, int id2) {
         if (state.columnStates.containsKey(id1) && state.columnStates.containsKey(id2)) {
-            return (state.columnStates.get(id1).lastKnownPosition + state.columnStates.get(id2).lastKnownPosition) / 2;
+            Double mid = (state.columnStates.get(id1).lastKnownPosition + state.columnStates.get(id2).lastKnownPosition) / 2;
+            return mid;
         }
         else {
             return -1;
@@ -97,11 +106,10 @@ public class CryptoboxDetector extends OpenCVPipeline {
     final double sizeFactor = 0.5;
     final double minHeightWidthRatio = 1.2;
     final double testGapAreaFactor = 0.8;
-    final int horizontalDistanceCenterThreshold = 15;
-    final int horizontalThreshold = 50;
-    final int maxDelta = 40;
+    final int horizontalDistanceCenterThreshold = 60;
+    final int horizontalThreshold = 60;
 
-    final double maxTimeNotVisible = 250;
+    final double maxFramesNotVisible = 15;
     ElapsedTime timer;
 
     DogeCVColorFilter colorFilter;
@@ -123,16 +131,32 @@ public class CryptoboxDetector extends OpenCVPipeline {
 
     @Override
     public Mat processFrame(Mat rgba, Mat gray) {
+        if (passThrough) {
+            return rgba;
+        }
         detectCryptobox(rgba, gray);
         if (!firstTime) {
-            try {
-                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                Thread.sleep(1000);
-                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                Thread.sleep(1000);
-                AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            } catch (InterruptedException e) {
-                // Swallow
+            if (color == TeamColor.BLUE) {
+                try {
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    Thread.sleep(1000);
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    Thread.sleep(1000);
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                } catch (InterruptedException e) {
+                    // Swallow
+                }
+            }
+            else {
+                try {
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+                    Thread.sleep(1000);
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    Thread.sleep(1000);
+                    AppUtil.getInstance().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+                } catch (InterruptedException e) {
+                    // Swallow
+                }
             }
             firstTime = true;
         }
@@ -144,10 +168,12 @@ public class CryptoboxDetector extends OpenCVPipeline {
         this.color = color;
         if (color == TeamColor.BLUE) {
             direction = Direction.LEFT;
+            colorFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.BLUE);
         } else {
             direction = Direction.RIGHT;
+            colorFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.RED);
         }
-        colorFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.RED);
+
         timer = new ElapsedTime();
         super.init(context, viewDisplay, cameraIndex);
     }
@@ -156,6 +182,11 @@ public class CryptoboxDetector extends OpenCVPipeline {
         rgb.copyTo(workingMat);
         Size initialSize = rgb.size();
         Size newSize = new Size(initialSize.width * sizeFactor, initialSize.height * sizeFactor);
+        frameSize = newSize;
+        if(color == TeamColor.RED){
+            Core.flip(workingMat, workingMat, -1); //mRgba.t() is the transpose
+        }
+
         Imgproc.resize(workingMat, workingMat, newSize);
 
         workingMat.copyTo(debugImage);
@@ -230,28 +261,29 @@ public class CryptoboxDetector extends OpenCVPipeline {
             Collections.sort(contours, rightToLeft);
         }
         List<List<Contour>> contourGroups = new ArrayList<>();
-        for (int i = 0; i < contours.size(); i++) {
-            if (i == contours.size() - 1) {
-                break;
-            }
-
-            if (Math.abs(contours.get(i).center().x - contours.get(i + 1).center().x) < horizontalThreshold) {
-
-                // Part of the same group
-                if (contourGroups.size() == 0) {
-                    // First group
-                    contourGroups.add(new ArrayList<Contour>());
-                    contourGroups.get(0).add(contours.get(i));
-                    contourGroups.get(0).add(contours.get(i + 1));
-
-                } else {
-                    contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+        double currentAverage = 0;
+        int groupIndex = 0;
+        if (contours.size() > 0) {
+            contourGroups.add(new ArrayList<Contour>());
+            contourGroups.get(0).add(contours.get(0));
+            currentAverage = contours.get(0).center().x;
+        }
+        for (int i = 1; i < contours.size(); i++) {
+            if (Math.abs(currentAverage - contours.get(i).center().x) < horizontalThreshold) {
+                contourGroups.get(groupIndex).add(contours.get(i));
+                double sum = 0;
+                for (Contour c : contourGroups.get(groupIndex)) {
+                    sum += c.center().x;
                 }
-            } else {
-                // New group
-                contourGroups.add(new ArrayList<Contour>());
-                contourGroups.get(contourGroups.size() - 1).add(contours.get(i + 1));
+                currentAverage = sum / contourGroups.get(groupIndex).size();
             }
+            else {
+                contourGroups.add(new ArrayList<Contour>());
+                groupIndex++;
+                contourGroups.get(groupIndex).add(contours.get(i));
+                currentAverage = contours.get(i).center().x;
+            }
+
         }
 
         List<Contour> biggestContours = new ArrayList<>();
@@ -288,17 +320,33 @@ public class CryptoboxDetector extends OpenCVPipeline {
         List<Double> midXVals = new ArrayList<>();
 
         for (int i = 0; i < biggestContours.size() - 1; i++) {
-            Drawing.drawCircle(debugImage, biggestContours.get(i).center().average(biggestContours.get(i + 1).center()), 4, Color.create(BasicColors.ORANGE));
+            // Drawing.drawCircle(debugImage, biggestContours.get(i).center().average(biggestContours.get(i + 1).center()), 4, Color.create(BasicColors.ORANGE));
             midXVals.add(biggestContours.get(i).center().average(biggestContours.get(i + 1).center()).x);
         }
-
+        List<Integer> removalList = new ArrayList<>();
         // Update to find new positions of tracked objects
         for (ColumnState columnState : state.columnStates.values()) {
+            boolean visible = false;
+
             for (Double xVal : columnXVals) {
                 if (Math.abs(xVal-columnState.lastKnownPosition) < columnState.tolerance) {
                     columnState.lastKnownPosition = xVal;
+                    visible = true;
+                    columnState.framesSinceVisible = 0;
                 }
             }
+
+            if (!visible) {
+                columnState.framesSinceVisible++;
+            }
+
+            if (columnState.framesSinceVisible > maxFramesNotVisible) {
+                removalList.add(columnState.id);
+            }
+        }
+
+        for (int i: removalList) {
+            state.columnStates.remove(i);
         }
         // Detect if any major contours don't have a column associated with them
         for (Double xVal : columnXVals) {
@@ -310,11 +358,14 @@ public class CryptoboxDetector extends OpenCVPipeline {
             }
 
             if (!hasAColumn) {
-                state.columnStates.put(state.index++, new ColumnState(xVal));
+                state.columnStates.put(state.index++, new ColumnState(xVal, state.index - 1));
             }
         }
-        for (int i = 0; i < state.columnStates.size(); i++) {
-            Drawing.drawText(debugImage, String.valueOf(i), new Point(state.columnStates.get(i).lastKnownPosition, 500), 0.5f, Color.create(BasicColors.GREEN));
+        Iterator iterator = state.columnStates.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry pair = (Map.Entry)iterator.next();
+            ColumnState columnState = (ColumnState)(pair.getValue());
+            Drawing.drawText(debugImage, String.valueOf((int)pair.getKey()), new Point(columnState.lastKnownPosition, 180), 0.5f, Color.create(BasicColors.GREEN));
         }
 
         previousFrameContours = biggestContours;

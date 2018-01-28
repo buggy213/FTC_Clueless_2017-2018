@@ -55,6 +55,7 @@ import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 import org.firstinspires.ftc.teamcode.Shared.VL53L0X;
 import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
+import org.firstinspires.ftc.teamcode.Test.TeamColor;
 import org.opencv.core.Mat;
 
 
@@ -196,7 +197,7 @@ public class AutonomousOpMode extends LinearOpMode {
             public void run() {
                 try {
                     hw.linearSlideDriveMotor.setPower(-0.75);
-                    Thread.sleep(1200);
+                    Thread.sleep(1000);
                     hw.linearSlideDriveMotor.setPower(0);
                 } catch (InterruptedException e) {
 
@@ -232,7 +233,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
         vuforia.close();
         detector = new CryptoboxDetector();
-        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, red ? TeamColor.RED : TeamColor.BLUE);
         detector.enable();
         hw.upperLeft.setPosition(0.19);
         hw.upperRight.setPosition(0.77);
@@ -286,7 +287,7 @@ public class AutonomousOpMode extends LinearOpMode {
             hw.altClawRight.setPosition(0.30);  //0.276
             sleep(500);
             liftGlyph.start();
-            sleep(1200);
+            sleep(1000);
 
             if (close) {
                 if (red) {
@@ -330,10 +331,10 @@ public class AutonomousOpMode extends LinearOpMode {
                     visionCrypto(0.1, 0.0003, Direction.LEFT, vumark);*/
                     switch (vumark) {
                         case LEFT:
-                            moveHorizontal(0.1, 0.0003, 1175, Direction.LEFT);
+                            moveHorizontal(0.1, 0.0003, 1135, Direction.LEFT);
                             break;
                         case FORWARD:
-                            moveHorizontal(0.1, 0.0003, 735, Direction.LEFT);
+                            moveHorizontal(0.1, 0.0003, 695, Direction.LEFT);
                             break;
                         case RIGHT:
                             moveHorizontal(0.1, 0.0003, 300, Direction.LEFT);

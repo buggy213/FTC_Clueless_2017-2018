@@ -29,6 +29,9 @@
 
 package org.firstinspires.ftc.teamcode.Autonomous;
 
+import android.graphics.Bitmap;
+import android.util.Pair;
+
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.detectors.JewelDetector;
 import com.qualcomm.hardware.adafruit.AdafruitI2cColorSensor;
@@ -39,6 +42,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -56,7 +61,13 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 import org.firstinspires.ftc.teamcode.Shared.VL53L0X;
 import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
 import org.firstinspires.ftc.teamcode.Test.TeamColor;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import java.util.LinkedList;
+import java.util.Queue;
 
 
 /**
@@ -78,6 +89,8 @@ public class AutonomousOpMode extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
+    final int maxBufferResults = 25;
+
     // Used to access robot hardware
     RobotHardware hw;
 
@@ -85,13 +98,18 @@ public class AutonomousOpMode extends LinearOpMode {
 
     // Stores instance of Vuforia Localizer
     ClosableVuforiaLocalizer vuforia;
-    
+
+
+    JewelDetector jewels = new JewelDetector();
+
     // Instance of relic trackable
     VuforiaTrackable relicTemplate;
 
     RelicRecoveryVuMark lastKnownVumark = RelicRecoveryVuMark.UNKNOWN;
 
     CryptoboxDetector detector;
+
+    Queue<Pair<RelicRecoveryVuMark, JewelDetector.JewelOrder>> resultsBuffer = new LinkedList<>();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -135,7 +153,6 @@ public class AutonomousOpMode extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        JewelDetector jewels = new JewelDetector();
         jewels.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
 
         //Jewel Detector Settings
@@ -906,10 +923,32 @@ public class AutonomousOpMode extends LinearOpMode {
     }
 
     public void waitForStart(boolean red, boolean close) {
+        Image rgb = null;
+        Mat tmp = new Mat();
+        Mat tmpGray = new Mat();
+
         while (!isStarted()) {
             synchronized (this) {
                 try {
-                    this.wait();
+                    VuforiaLocalizer.CloseableFrame frame = vuforia.getFrameQueue().take();
+                    long numImages = frame.getNumImages();
+                    for (int i = 0; i < numImages; i++) {
+                        if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                            rgb = frame.getImage(i);
+                            break;
+                        }
+                    }
+                    if (rgb != null) {
+                        Bitmap bm = Bitmap.createBitmap(rgb.getWidth(), rgb.getHeight(), Bitmap.Config.RGB_565);
+                        bm.copyPixelsFromBuffer(rgb.getPixels());
+                        tmp = new Mat(rgb.getWidth(), rgb.getHeight(), CvType.CV_8UC4);
+                        Utils.bitmapToMat(bm, tmp);
+                        Imgproc.cvtColor(tmp, tmpGray, Imgproc.COLOR_BGR2GRAY);
+                        jewels.processFrame(tmp, tmpGray);
+                        jewels.getCurrentOrder();
+                        frame.close();
+                    }
+
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;

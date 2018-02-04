@@ -223,7 +223,6 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.altClawTurn.setPosition(0.5);  // center
         hw.upperLeft.setPosition(0.05);
         hw.upperRight.setPosition(0.90);
-
         // Wait for the game to start (driver presses PLAY)
         prestart(red, close);
         telemetry.addData("All systems nominal", "Standing by for liftoff");

@@ -1,9 +1,5 @@
-package com.disnodeteam.dogecv.detectors;
+package Shared;
 
-
-import com.disnodeteam.dogecv.OpenCVPipeline;
-import com.disnodeteam.dogecv.filters.DogeCVColorFilter;
-import com.disnodeteam.dogecv.filters.LeviColorFilter;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -14,6 +10,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -23,7 +20,7 @@ import java.util.List;
  * Created by Victo on 11/5/2017.
  */
 
-public class JewelDetector extends OpenCVPipeline {
+public class JewelDetector {
 
     public enum JewelOrder {
         RED_BLUE,
@@ -61,6 +58,7 @@ public class JewelDetector extends OpenCVPipeline {
 
     private Mat workingMat = new Mat();
     private Mat blurredMat  = new Mat();
+    private Mat debug = new Mat();
     private Mat maskRed  = new Mat();
     private Mat maskBlue  = new Mat();
     private Mat hiarchy  = new Mat();
@@ -68,7 +66,6 @@ public class JewelDetector extends OpenCVPipeline {
 
     private Size newSize = new Size();
 
-    @Override
     public Mat processFrame(Mat rgba, Mat gray) {
 
         Size initSize= rgba.size();
@@ -87,10 +84,16 @@ public class JewelDetector extends OpenCVPipeline {
         colorFilterRed.process(redConvert, maskRed);
         colorFilterBlue.process(blueConvert, maskBlue);
 
+        Imgcodecs.imwrite("imgs/red.jpg", maskRed);
+        Imgcodecs.imwrite("imgs/blue.jpg", maskBlue);
+
         List<MatOfPoint> contoursRed = new ArrayList<>();
 
         Imgproc.findContours(maskRed, contoursRed, hiarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(workingMat,contoursRed,-1,new Scalar(230,70,70),2);
+        Imgproc.drawContours(workingMat,contoursRed,-1,new Scalar(0, 0, 255),15);
+
+
+
         Rect chosenRedRect = null;
         double chosenRedScore = Integer.MAX_VALUE;
 
@@ -153,8 +156,8 @@ public class JewelDetector extends OpenCVPipeline {
             }
 
             if(debugContours && area > 100){
-                Imgproc.circle(workingMat,centerPoint,3,new Scalar(0,255,255),3);
-                Imgproc.putText(workingMat,"Area: " + area,centerPoint,0,0.5,new Scalar(0,255,255));
+               Imgproc.circle(workingMat,centerPoint,3,new Scalar(0,255,255),3);
+               Imgproc.putText(workingMat,"Area: " + area,centerPoint,0,0.5,new Scalar(0,255,255));
             }
 
         }
@@ -162,7 +165,9 @@ public class JewelDetector extends OpenCVPipeline {
         List<MatOfPoint> contoursBlue = new ArrayList<>();
 
         Imgproc.findContours(maskBlue, contoursBlue,hiarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(workingMat,contoursBlue,-1,new Scalar(70,130,230),2);
+        Imgproc.drawContours(workingMat,contoursBlue,-1,new Scalar(255, 0 ,0),15);
+
+
         Rect chosenBlueRect = null;
         double chosenBlueScore = Integer.MAX_VALUE;
 
@@ -268,8 +273,11 @@ public class JewelDetector extends OpenCVPipeline {
             currentOrder = JewelOrder.UNKNOWN;
         }
 
-        Imgproc.putText(workingMat,"Result: " + lastOrder.toString(),new Point(10,newSize.height - 30),0,1, new Scalar(255,255,0),1);
-        Imgproc.putText(workingMat,"Current Track: " + currentOrder.toString(),new Point(10,newSize.height - 10),0,0.5, new Scalar(255,255,255),1);
+        Imgproc.putText(workingMat,"Result: " + lastOrder.toString(),new Point(10,newSize.height - 100),0,2.5, new Scalar(255,255,0),4);
+        // Imgproc.putText(workingMat,"Current Track: " + currentOrder.toString(),new Point(10,newSize.height - 50),0,1.25, new Scalar(255,255,255),4);
+
+        Imgproc.cvtColor(workingMat, debug, Imgproc.COLOR_BGR2RGB);
+        Imgcodecs.imwrite("imgs/results.jpg", debug);
 
         Imgproc.resize(workingMat,workingMat,initSize);
 

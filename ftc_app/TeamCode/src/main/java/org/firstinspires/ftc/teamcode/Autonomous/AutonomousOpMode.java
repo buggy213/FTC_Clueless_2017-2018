@@ -34,23 +34,17 @@ import android.util.Pair;
 
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.detectors.JewelDetector;
-import com.qualcomm.hardware.adafruit.AdafruitI2cColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
-import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
@@ -58,7 +52,6 @@ import org.firstinspires.ftc.teamcode.Shared.ClosableVuforiaLocalizer;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
-import org.firstinspires.ftc.teamcode.Shared.VL53L0X;
 import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
 import org.firstinspires.ftc.teamcode.Test.TeamColor;
 import org.opencv.android.Utils;
@@ -66,8 +59,12 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Map;
+
+import static java.util.Collections.max;
 
 
 /**
@@ -106,10 +103,10 @@ public class AutonomousOpMode extends LinearOpMode {
     VuforiaTrackable relicTemplate;
 
     RelicRecoveryVuMark lastKnownVumark = RelicRecoveryVuMark.UNKNOWN;
-
+    JewelDetector.JewelOrder order;
     CryptoboxDetector detector;
 
-    Queue<Pair<RelicRecoveryVuMark, JewelDetector.JewelOrder>> resultsBuffer = new LinkedList<>();
+    LinkedList<Pair<RelicRecoveryVuMark, JewelDetector.JewelOrder>> resultsBuffer = new LinkedList<>();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -122,8 +119,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         try {
             mode = parameters.get("start");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             requestOpModeStop();
         }
         boolean close = mode.contains("CLOSE");
@@ -137,8 +133,7 @@ public class AutonomousOpMode extends LinearOpMode {
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         if (red) {
             hw.phoneServo2.setPosition(0.67); // 0.64
-        }
-        else {
+        } else {
             hw.phoneServo1.setPosition(0.16);  // 0.27
         }
         resetJewelArms();
@@ -153,8 +148,6 @@ public class AutonomousOpMode extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        jewels.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
-
         //Jewel Detector Settings
         jewels.areaWeight = 0.02;
         jewels.detectionMode = JewelDetector.JewelDetectionMode.MAX_AREA; // PERFECT_AREA
@@ -163,37 +156,8 @@ public class AutonomousOpMode extends LinearOpMode {
         jewels.maxDiffrence = 15;
         jewels.ratioWeight = 15;
         jewels.minArea = 700;
-        jewels.rotateMat = red;
-
-        jewels.enable();
 
 
-        int times = 0; // Make sure the jewel detector is confident
-        JewelDetector.JewelOrder order = JewelDetector.JewelOrder.UNKNOWN;
-
-        while(true) {
-            if (jewels.getCurrentOrder() != JewelDetector.JewelOrder.UNKNOWN) {
-                if (order != jewels.getCurrentOrder()) {
-                    order = jewels.getCurrentOrder();
-                    times = 0;
-                }
-                else {
-                    times++;
-                }
-            }
-            else {
-                times = 0;
-            }
-            if (times > 5) {
-                break;
-            }
-            telemetry.addData("Order: ", order.toString());
-            telemetry.addData("Reliability Check", times + "/5");
-            telemetry.update();
-            this.sleep(50);
-        }
-
-        jewels.disable();
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
@@ -208,6 +172,8 @@ public class AutonomousOpMode extends LinearOpMode {
 
         relicTrackables.activate();
         //endregion
+
+        waitForStart();
 
         Runnable motorLift = new Runnable() {
             @Override
@@ -241,8 +207,6 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.upperLeft.setPosition(0.05);
         hw.upperRight.setPosition(0.90);
         // Wait for the game to start (driver presses PLAY)
-        prestart(red, close);
-        telemetry.addData("All systems nominal", "Standing by for liftoff");
         waitForStart();
 
         resetFlickers();
@@ -259,7 +223,7 @@ public class AutonomousOpMode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             Direction vumark = null;
-            switch(lastKnownVumark) {
+            switch (lastKnownVumark) {
                 case LEFT:
                     vumark = Direction.LEFT;
                     break;
@@ -275,8 +239,7 @@ public class AutonomousOpMode extends LinearOpMode {
 
             if (red) {
                 // hw.phoneServo2.setPosition(0.26); // 0.64
-            }
-            else {
+            } else {
                 hw.phoneServo1.setPosition(0.27);  // 0.27
             }
 
@@ -319,8 +282,7 @@ public class AutonomousOpMode extends LinearOpMode {
                             break;
                     }
                     drivetrain.GyroTurn(0.15, -90);
-                }
-                else {
+                } else {
                     switch (vumark) {
                         case LEFT:
                             AutoMove(0.25, 0, 1223);
@@ -334,8 +296,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     }
                     drivetrain.GyroTurn(0.15, 90);
                 }
-            }
-            else {
+            } else {
                 AutoMove(0.25, 0, 1050);
 
                 if (red) {
@@ -352,8 +313,7 @@ public class AutonomousOpMode extends LinearOpMode {
                             moveHorizontal(0.1, 0.0003, 300, Direction.LEFT);
                             break;
                     }
-                }
-                else {
+                } else {
                     switch (vumark) {
                         case LEFT:
                             moveHorizontal(0.1, 0.0003, 200, Direction.RIGHT);
@@ -388,17 +348,13 @@ public class AutonomousOpMode extends LinearOpMode {
             if (close) {
                 if (red) {
                     drivetrain.GyroTurn(0.4, 90);
-                }
-                else {
+                } else {
                     drivetrain.GyroTurn(0.4, -90);
                 }
-            }
-            else
-            {
+            } else {
                 if (red) {
                     drivetrain.GyroTurn(0.4, -180);
-                }
-                else {
+                } else {
                     drivetrain.GyroTurn(0.4, 180);
                 }
             }
@@ -460,17 +416,14 @@ public class AutonomousOpMode extends LinearOpMode {
         if (left) {
             if (order == JewelDetector.JewelOrder.RED_BLUE) {
                 hw.leftFlick.setPosition(1); // Flick back
-            }
-            else {
+            } else {
                 hw.leftFlick.setPosition(0); // Flick forward
             }
-        }
-        else {
+        } else {
             if (order == JewelDetector.JewelOrder.RED_BLUE) {
                 // Flick back
                 hw.rightFlick.setPosition(0);
-            }
-            else {
+            } else {
                 // Flick forward
                 hw.rightFlick.setPosition(1);
             }
@@ -491,6 +444,7 @@ public class AutonomousOpMode extends LinearOpMode {
         public Encoders() {
 
         }
+
         public Encoders(RobotHardware robot) {
             this.backLeft = robot.backLeft.getCurrentPosition();
             this.backRight = robot.backRight.getCurrentPosition();
@@ -553,6 +507,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         return null;
     }
+
     private void moveHorizontal(double speed, double p, double amount, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
@@ -611,7 +566,7 @@ public class AutonomousOpMode extends LinearOpMode {
         int id2 = 0;
         boolean specialMode = false;
         if (blue) {
-            switch(desired) {
+            switch (desired) {
                 case LEFT:
                     specialMode = true;
                     break;
@@ -624,9 +579,8 @@ public class AutonomousOpMode extends LinearOpMode {
                     id2 = 1;
                     break;
             }
-        }
-        else {
-            switch(desired) {
+        } else {
+            switch (desired) {
                 case LEFT:
                     id1 = 1;
                     id2 = 2;
@@ -642,8 +596,7 @@ public class AutonomousOpMode extends LinearOpMode {
         }
         if (specialMode) {
             return;
-        }
-        else {
+        } else {
             while (opModeIsActive()) {
 
                 if (detector.getCenterPoint(id1, id2) != -1) {
@@ -655,8 +608,7 @@ public class AutonomousOpMode extends LinearOpMode {
                         if (detector.getCenterPoint(id1, id2) / detector.frameSize.width > 0.40) {
                             break;
                         }
-                    }
-                    else {
+                    } else {
                         if (detector.getCenterPoint(id1, id2) / detector.frameSize.width < 0.60) {
                             break;
                         }
@@ -699,6 +651,7 @@ public class AutonomousOpMode extends LinearOpMode {
             drivetrain.stop();
         }
     }
+
     private void lightCrypto(double speed, double p, Direction direction, Direction desired, boolean blue, int offset) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
@@ -726,8 +679,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 dominantColor = hw.bottom_color.blue();
                 secondaryColor = hw.bottom_color.red();
                 multiplier = 1.25;
-            }
-            else {
+            } else {
                 dominantColor = hw.bottom_color.red();
                 secondaryColor = hw.bottom_color.blue();
                 multiplier = 1.25;
@@ -740,29 +692,26 @@ public class AutonomousOpMode extends LinearOpMode {
                     if (blue) {
                         dominantColor = hw.bottom_color.blue();
                         secondaryColor = hw.bottom_color.red();
-                    }
-                    else {
+                    } else {
                         dominantColor = hw.bottom_color.red();
                         secondaryColor = hw.bottom_color.blue();
                     }
                 }
-                while (opModeIsActive() && !(dominantColor > (secondaryColor * multiplier))){
+                while (opModeIsActive() && !(dominantColor > (secondaryColor * multiplier))) {
                     if (blue) {
                         dominantColor = hw.bottom_color.blue();
                         secondaryColor = hw.bottom_color.red();
-                    }
-                    else {
+                    } else {
                         dominantColor = hw.bottom_color.red();
                         secondaryColor = hw.bottom_color.blue();
                     }
                 }
-                while (opModeIsActive() && (dominantColor > (secondaryColor * multiplier))){
+                while (opModeIsActive() && (dominantColor > (secondaryColor * multiplier))) {
                     if (blue) {
                         dominantColor = hw.bottom_color.blue();
                         secondaryColor = hw.bottom_color.red();
                         multiplier = 1.25;
-                    }
-                    else {
+                    } else {
                         dominantColor = hw.bottom_color.red();
                         secondaryColor = hw.bottom_color.blue();
                         multiplier = 1.25;
@@ -832,14 +781,13 @@ public class AutonomousOpMode extends LinearOpMode {
     }
 
 
-
     private void crypto(int ticks, double speed, double p, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
         int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
         int forwardRightStart = hw.forwardRight.getCurrentPosition();
         int currentTicks = 0;
-        while(opModeIsActive() && currentTicks < ticks) {
+        while (opModeIsActive() && currentTicks < ticks) {
             double distance = hw.ultrasonic.distance();
             if (distance < 5) {
 
@@ -905,8 +853,7 @@ public class AutonomousOpMode extends LinearOpMode {
                 telemetry.addData("VuMark", "%s visible", vuMark);
                 if (lastKnownVumark == vuMark) {
                     times++;
-                }
-                else {
+                } else {
                     lastKnownVumark = vuMark;
                     times = 0;
                 }
@@ -922,38 +869,108 @@ public class AutonomousOpMode extends LinearOpMode {
         }
     }
 
-    public void waitForStart(boolean red, boolean close) {
+    @Override
+    public void waitForStart() {
         Image rgb = null;
         Mat tmp = new Mat();
         Mat tmpGray = new Mat();
-
+        vuforia.setFrameQueueCapacity(10);
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
         while (!isStarted()) {
-            synchronized (this) {
-                try {
-                    VuforiaLocalizer.CloseableFrame frame = vuforia.getFrameQueue().take();
-                    long numImages = frame.getNumImages();
-                    for (int i = 0; i < numImages; i++) {
-                        if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
-                            rgb = frame.getImage(i);
-                            break;
-                        }
+            try {
+                VuforiaLocalizer.CloseableFrame frame = vuforia.getFrameQueue().take();
+                long numImages = frame.getNumImages();
+                for (int i = 0; i < numImages; i++) {
+                    if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                        rgb = frame.getImage(i);
+                        break;
                     }
-                    if (rgb != null) {
-                        Bitmap bm = Bitmap.createBitmap(rgb.getWidth(), rgb.getHeight(), Bitmap.Config.RGB_565);
-                        bm.copyPixelsFromBuffer(rgb.getPixels());
-                        tmp = new Mat(rgb.getWidth(), rgb.getHeight(), CvType.CV_8UC4);
-                        Utils.bitmapToMat(bm, tmp);
-                        Imgproc.cvtColor(tmp, tmpGray, Imgproc.COLOR_BGR2GRAY);
-                        jewels.processFrame(tmp, tmpGray);
-                        jewels.getCurrentOrder();
-                        frame.close();
-                    }
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
                 }
+                if (rgb != null) {
+                    Bitmap bm = Bitmap.createBitmap(rgb.getWidth(), rgb.getHeight(), Bitmap.Config.RGB_565);
+                    bm.copyPixelsFromBuffer(rgb.getPixels());
+                    tmp = new Mat(rgb.getWidth(), rgb.getHeight(), CvType.CV_8UC3);
+
+                    Utils.bitmapToMat(bm, tmp);
+                    Imgproc.cvtColor(tmp, tmpGray, Imgproc.COLOR_RGB2GRAY);
+                    jewels.processFrame(tmp, tmpGray);
+                    JewelDetector.JewelOrder order = jewels.getCurrentOrder();
+                    resultsBuffer.add(new Pair<>(RelicRecoveryVuMark.from(relicTemplate), order));
+                    if (resultsBuffer.size() > maxBufferResults) {
+                        resultsBuffer.removeFirst();
+                    }
+                    Results results = analyzeBuffer();
+                    telemetry.addData("Vision", results.toString());
+                    telemetry.update();
+                    lastKnownVumark = results.mostCommonVuMark;
+                    order = results.mostCommonOrder;
+                    frame.close();
+                    Thread.sleep(50);
+                }
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
         }
     }
+
+    class Results {
+        public Map<RelicRecoveryVuMark, Integer> vumarkOccurences = new HashMap<>();
+        public Map<JewelDetector.JewelOrder, Integer> jewelOccurences = new HashMap<>();
+        RelicRecoveryVuMark mostCommonVuMark = RelicRecoveryVuMark.UNKNOWN;
+        int vF;
+        JewelDetector.JewelOrder mostCommonOrder = JewelDetector.JewelOrder.UNKNOWN;
+        int oF;
+
+        public Results() {
+            vumarkOccurences.put(RelicRecoveryVuMark.LEFT, 0);
+            vumarkOccurences.put(RelicRecoveryVuMark.CENTER, 0);
+            vumarkOccurences.put(RelicRecoveryVuMark.RIGHT, 0);
+            vumarkOccurences.put(RelicRecoveryVuMark.UNKNOWN, 0);
+
+            jewelOccurences.put(JewelDetector.JewelOrder.BLUE_RED, 0);
+            jewelOccurences.put(JewelDetector.JewelOrder.RED_BLUE, 0);
+            jewelOccurences.put(JewelDetector.JewelOrder.UNKNOWN, 0);
+        }
+
+        @Override
+        public String toString() {
+            return "Most likely VuMark: " + mostCommonVuMark.toString() + "\n" +
+                    "Certainty: " + (vF / maxBufferResults) * 100 + "%" + "\n" +
+                    "Most likely Jewel Order: " + mostCommonOrder + "\n" +
+                    "Certainty: " + (oF / maxBufferResults) * 100 + "%";
+        }
+    }
+
+    public Results analyzeBuffer() {
+        Results results = new Results();
+        for (Pair<RelicRecoveryVuMark, JewelDetector.JewelOrder> pair : resultsBuffer) {
+            RelicRecoveryVuMark vm = pair.first;
+            JewelDetector.JewelOrder order = pair.second;
+
+            results.vumarkOccurences.put(vm, results.vumarkOccurences.get(vm) + 1);
+            results.jewelOccurences.put(order, results.jewelOccurences.get(order) + 1);
+        }
+
+        int maxVuMarkFrequency = Collections.max(results.vumarkOccurences.values());
+        for (Map.Entry<RelicRecoveryVuMark, Integer> vuMarkIntegerEntry : results.vumarkOccurences.entrySet()) {
+            if (vuMarkIntegerEntry.getValue() == maxVuMarkFrequency) {
+                results.mostCommonVuMark = vuMarkIntegerEntry.getKey();
+            }
+        }
+
+        results.vF = maxVuMarkFrequency;
+
+        int maxOrderFrequency = Collections.max(results.jewelOccurences.values());
+        for (Map.Entry<JewelDetector.JewelOrder, Integer> jewelIntegerEntry : results.jewelOccurences.entrySet()) {
+            if (jewelIntegerEntry.getValue() == maxOrderFrequency) {
+                results.mostCommonOrder = jewelIntegerEntry.getKey();
+            }
+        }
+
+        results.oF = maxOrderFrequency;
+        return results;
+    }
+
 }

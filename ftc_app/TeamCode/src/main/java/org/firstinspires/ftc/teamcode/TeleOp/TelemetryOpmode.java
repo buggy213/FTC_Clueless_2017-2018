@@ -263,8 +263,8 @@ public class TelemetryOpmode extends LinearOpMode {
                     break;
                 case 4: // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
-                    robot.altClawLeft.setPosition(0.59); //0.550
-                    robot.altClawRight.setPosition(0.37); //0.336
+                    robot.altClawLeft.setPosition(0.57); //0.550
+                    robot.altClawRight.setPosition(0.39); //0.336
                     break;
             }
 

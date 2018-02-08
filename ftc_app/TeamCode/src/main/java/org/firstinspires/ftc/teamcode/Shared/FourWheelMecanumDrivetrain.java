@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Shared;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.configuration.MotorConfiguration;
 import com.qualcomm.robotcore.robot.Robot;
@@ -21,6 +22,8 @@ import static java.lang.Math.sin;
 public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     RobotHardware rw = RobotHardware.GetSingleton();
 
+    LinearOpMode runningOpMode;
+
     Orientation angles;
 
     double speedMultiplier = 0.75;
@@ -33,6 +36,9 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     // region auto
     // Primary movement method for auto
 
+    public void setRunningOpMode(LinearOpMode opMode) {
+        this.runningOpMode = opMode;
+    }
 
     public void AutoMove(double speed, double angle, double time) throws InterruptedException{
         MoveAngle(speed, angle, 0);
@@ -132,6 +138,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             MoveAngle(0, 0, -speed);
         }
     }
+    
+    
 
     // Pulls a one-eighty using the gyro, doesn't need to be precise
     public void OneEighty(double angle, double speed) {
@@ -247,6 +255,44 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         MoveAngle(speed, angle, turn);
     }
 
+
+    public void EncoderTurn(double speed, double counts, boolean clockwise) {
+        int backLeftStart = rw.backLeft.getCurrentPosition();
+        int backRightStart = rw.backRight.getCurrentPosition();
+        int forwardLeftStart = rw.forwardLeft.getCurrentPosition();
+        int forwardRightStart = rw.forwardRight.getCurrentPosition();
+
+        while (runningOpMode.opModeIsActive()) {
+            int backLeft = rw.backLeft.getCurrentPosition();
+            int backRight = rw.backRight.getCurrentPosition();
+            int forwardLeft = rw.forwardLeft.getCurrentPosition();
+            int forwardRight = rw.forwardRight.getCurrentPosition();
+
+            int backLeftDiff = Math.abs(backLeft - backLeftStart);
+            int backRightDiff = Math.abs(backRight - backRightStart);
+            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
+            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
+
+            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+            if (avg >= counts) {
+                break;
+            }
+            
+            if (clockwise) {
+                setPower(rw.forwardRight, speed);
+                setPower(rw.forwardLeft, -speed);
+                setPower(rw.backRight, speed);
+                setPower(rw.backLeft, -speed);
+            }
+            else {
+                setPower(rw.forwardRight, -speed);
+                setPower(rw.forwardLeft, speed);
+                setPower(rw.backRight, -speed);
+                setPower(rw.backLeft, speed);
+            }
+        }
+
+    }
     // Primary movement methods
 
     /**

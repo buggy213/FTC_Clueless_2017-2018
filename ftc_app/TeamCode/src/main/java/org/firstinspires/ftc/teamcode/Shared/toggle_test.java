@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 /**
  * Created by slau on 12/8/2017.
  */
-@TeleOp(name = "toggle")
+// @TeleOp(name = "toggle")
 public class toggle_test extends LinearOpMode {
     Gamepad previousGamepad1 = new Gamepad();
 

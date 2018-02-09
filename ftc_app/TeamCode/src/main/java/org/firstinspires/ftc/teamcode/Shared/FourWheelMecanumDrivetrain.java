@@ -274,10 +274,17 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
 
             double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
+
+            if (runningOpMode != null) {
+                runningOpMode.telemetry.addData("Average", avg);
+                runningOpMode.telemetry.addData("Target", counts);
+                runningOpMode.telemetry.update();
+            }
+
             if (avg >= counts) {
                 break;
             }
-            
+
             if (clockwise) {
                 setPower(rw.forwardRight, speed);
                 setPower(rw.forwardLeft, -speed);

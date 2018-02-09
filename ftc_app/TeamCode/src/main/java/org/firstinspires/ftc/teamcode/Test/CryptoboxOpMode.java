@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.io.IOException;
 
 
-@TeleOp(name="Crypto POC", group="DogeCV")
+// @TeleOp(name="Crypto POC", group="DogeCV")
 
 public class CryptoboxOpMode extends OpMode
 {

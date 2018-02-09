@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 /**
  * Created by hsunx on 11/26/2017.
  */
-@TeleOp(name = "Test Parking", group = "test")
+// @TeleOp(name = "Test Parking", group = "test")
 public class park_test extends LinearOpMode {
     double encoderCount = 855;
 

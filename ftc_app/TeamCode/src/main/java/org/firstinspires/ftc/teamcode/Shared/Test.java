@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.Test.TeamColor;
 /**
  * Created by hsunx on 11/26/2017.
  */
-@TeleOp(name = "Test OpMode", group = "test")
+// @TeleOp(name = "Test OpMode", group = "test")
 public class Test extends OpMode {
     Servo leftClaw;
     Servo rightClaw;

@@ -29,28 +29,16 @@
 
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
+import org.firstinspires.ftc.teamcode.TeleOp.TeleopEnabledTests.TeleopEnabledTest;
+import org.firstinspires.ftc.teamcode.TeleOp.TeleopEnabledTests.TeleopEnabledTestRegistrar;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -65,8 +53,8 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="TeleOp", group="Linear Opmode")
-public class TelemetryOpmode extends LinearOpMode {
+@TeleOp(name="Testing Program", group="Linear Opmode")
+public class TestingTeleOp extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -84,7 +72,7 @@ public class TelemetryOpmode extends LinearOpMode {
     int altClawPosition = 1;
     int upperClawPosition = 0;
     int altClawTurned = 1;
-
+    int index = 0;
 
     // boolean releaseGlyphs;
     // boolean slowMode = true;
@@ -95,7 +83,7 @@ public class TelemetryOpmode extends LinearOpMode {
     RobotHardware robot;
     @Override
     public void runOpMode() throws InterruptedException {
-
+        TeleopEnabledTestRegistrar.LoadTests();
         robot = RobotHardware.GetSingleton(hardwareMap);
         drivetrain = new FourWheelMecanumDrivetrain();
 
@@ -121,6 +109,8 @@ public class TelemetryOpmode extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
+
+
         robot.altClawTurn.setPosition(0.5);  // center
 
         // run until the end of the match (driver presses STOP)
@@ -128,6 +118,29 @@ public class TelemetryOpmode extends LinearOpMode {
             // Driving Gamepads logic
             // region driving
             double turn = ((reverse) ? 1 : -1) * (gamepad1.left_trigger - gamepad1.right_trigger) * turnSpeed;
+
+            if (gamepad1.a) {
+                if (index > 0) {
+                   index--;
+                }
+            }
+            if (gamepad1.b) {
+                if (index < (TeleopEnabledTestRegistrar.teleopEnabledTestClasses.size() - 1)) {
+                    index++;
+                }
+            }
+
+            telemetry.addData("Selected", TeleopEnabledTestRegistrar.teleopEnabledTestClasses.get(index).getName());
+
+            if (gamepad1.x) {
+                try {
+                    TeleopEnabledTest test = TeleopEnabledTestRegistrar.teleopEnabledTestClasses.get(index).newInstance();
+                    test.run();
+                }
+                catch (Exception e){
+                    // WCGW?
+                }
+            }
 
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0) && !turningTowards) {
 
@@ -325,7 +338,7 @@ public class TelemetryOpmode extends LinearOpMode {
             // telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
             // telemetry.addData("BL", robot.backLeft.getCurrentPosition());
             // telemetry.addData("BR", robot.backRight.getCurrentPosition());
-            // telemetry.update();
+            telemetry.update();
         }
     }
 

@@ -202,33 +202,46 @@ public class AutonomousOpMode extends LinearOpMode {
                     break;
             }
 
-            jewelArms(!red);
+            //jewelArms(!red);
 
             hw.linearSlideDriveMotor.setPower(-0.75);
-            sleep(500);
+            sleep(1200);
             hw.linearSlideDriveMotor.setPower(0);
 
             // Open altClaw
             hw.altClawLeft.setPosition(0.29);  // 0.225
             hw.altClawRight.setPosition(0.65);  // 0.727
 
-            sleep(1000);
+            //sleep(1000);
 
-            flick(!red, red);
+            //flick(!red, red);
+            hw.linearSlideDriveMotor.setPower(0.75);
+            sleep(1200);
+            hw.linearSlideDriveMotor.setPower(0);
 
-            dropGlpyh.start();
+            //dropGlpyh.start();
 
-            sleep(1000);
+            //sleep(1000);
 
-            resetJewelArms();
-            resetFlickers();
+            //resetJewelArms();
+            //resetFlickers();
 
             // Close altClaw
             hw.altClawLeft.setPosition(0.67);  //0.610
             hw.altClawRight.setPosition(0.30);  //0.276
             sleep(500);
-            liftGlyph.start();
+
+            hw.linearSlideDriveMotor.setPower(-0.75);
             sleep(1200);
+            hw.linearSlideDriveMotor.setPower(0);
+
+            //liftGlyph.start();
+            //sleep(1200);
+
+            AutoMove(0.25, 0, 1310);
+            drivetrain.GyroTurn(0.15, 90);
+
+
             if (close) {
                 AutoMove(0.25, 0, 1050);
                 if (red) {

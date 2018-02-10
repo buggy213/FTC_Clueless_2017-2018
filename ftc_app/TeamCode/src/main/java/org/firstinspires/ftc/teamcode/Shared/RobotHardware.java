@@ -55,13 +55,6 @@ public class RobotHardware {
     public Servo leftFlick;
     public Servo rightFlick;
 
-    public ColorSensor left_color;
-    public ColorSensor right_color;
-    public ColorSensor bottom_color;
-
-    public LVEZ4 ultrasonic;
-    public BNO055IMU imu;
-
     // Initializes the BNO055 IMU built into the REV Expansion Hub
     public void ReinitializeIMU() {
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -72,9 +65,6 @@ public class RobotHardware {
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-        imu = hwMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
 
     }
     public static void SetCurrentRunningOpMode(LinearOpMode opMode) {

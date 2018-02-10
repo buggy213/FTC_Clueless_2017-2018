@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
+import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
@@ -75,7 +76,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     }
 
     // Gyroscope Sensor based turn, untested
-    public void GyroTurn(double speed, double angle) {
+    /*public void GyroTurn(double speed, double angle) {
         // Angle is counterclockwise (sorry)
 
         double normalizedHeading = normalize(getHeading());
@@ -118,9 +119,9 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
                 break;
             }
         }
-    }
+    }*/
 
-    public void GyroTurnTeleop(double speed, double angle) {
+    /*public void GyroTurnTeleop(double speed, double angle) {
         // Angle is counterclockwise (sorry)
         double normalizedHeading = normalize(getHeading());
         double normalizedAngle = normalize(angle);
@@ -137,12 +138,12 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             // CCW
             MoveAngle(0, 0, -speed);
         }
-    }
+    }*/
     
     
 
     // Pulls a one-eighty using the gyro, doesn't need to be precise
-    public void OneEighty(double angle, double speed) {
+    /*public void OneEighty(double angle, double speed) {
         // Angle is counterclockwise (sorry)
         double normalizedHeading = normalize(getHeading());
         double normalizedAngle = normalize(angle);
@@ -184,11 +185,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
                 break;
             }
         }
-    }
+    }*/
 
-    public float getHeading() {
-        return rw.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-    }
 
     //endregion
 
@@ -239,29 +237,16 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         }
     }
 
-    // Moves robot relative to the field, rather than itself. Fails miserably when having to move diagonally in a consistent manner
-    public void FieldOrientedDrive(double speed, double forward, double strafe, double turn) {
-        float heading = getHeading();
-
-        double gyro_radians = heading * Math.PI/180;
-        double temp = forward * cos(gyro_radians) +
-                strafe * sin(gyro_radians);
-        strafe = -forward * sin(gyro_radians) +
-                strafe * cos(gyro_radians);
-        forward = temp;
-
-        double angle = Math.atan2(strafe, -forward);
-
-        MoveAngle(speed, angle, turn);
-    }
-
-
     public void EncoderTurn(double speed, double counts, boolean clockwise) {
         int backLeftStart = rw.backLeft.getCurrentPosition();
         int backRightStart = rw.backRight.getCurrentPosition();
         int forwardLeftStart = rw.forwardLeft.getCurrentPosition();
         int forwardRightStart = rw.forwardRight.getCurrentPosition();
 
+        if (runningOpMode == null) {
+            return;
+        }
+        Rotate(clockwise, speed);
         while (runningOpMode.opModeIsActive()) {
             int backLeft = rw.backLeft.getCurrentPosition();
             int backRight = rw.backRight.getCurrentPosition();
@@ -284,21 +269,8 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
             if (avg >= counts) {
                 break;
             }
-
-            if (clockwise) {
-                setPower(rw.forwardRight, speed);
-                setPower(rw.forwardLeft, -speed);
-                setPower(rw.backRight, speed);
-                setPower(rw.backLeft, -speed);
-            }
-            else {
-                setPower(rw.forwardRight, -speed);
-                setPower(rw.forwardLeft, speed);
-                setPower(rw.backRight, -speed);
-                setPower(rw.backLeft, speed);
-            }
         }
-
+        stop();
     }
     // Primary movement methods
 

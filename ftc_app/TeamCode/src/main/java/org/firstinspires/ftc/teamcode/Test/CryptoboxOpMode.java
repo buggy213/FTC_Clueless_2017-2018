@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.io.IOException;
 
 
-@TeleOp(name="Crypto POC", group="DogeCV")
+// @TeleOp(name="Crypto POC", group="DogeCV")
 
 public class CryptoboxOpMode extends OpMode
 {
@@ -36,7 +36,7 @@ public class CryptoboxOpMode extends OpMode
         cryptoboxDetector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, TeamColor.RED);
 
         cryptoboxDetector.enable();
-
+        cryptoboxDetector.passThrough = false;
 
 
 

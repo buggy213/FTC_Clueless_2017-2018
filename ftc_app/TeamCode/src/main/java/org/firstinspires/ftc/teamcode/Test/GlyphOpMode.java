@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.io.IOException;
 
 
-@TeleOp(name="DogeCV Glyph Detector", group="DogeCV")
+// @TeleOp(name="DogeCV Glyph Detector", group="DogeCV")
 
 public class GlyphOpMode extends OpMode
 {

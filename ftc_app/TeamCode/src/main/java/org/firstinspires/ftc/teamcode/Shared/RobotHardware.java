@@ -65,6 +65,7 @@ public class RobotHardware {
     // Initializes the BNO055 IMU built into the REV Expansion Hub
     public void ReinitializeIMU() {
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
@@ -112,7 +113,7 @@ public class RobotHardware {
                     // Hardware device, try to assign
                     try {
                         field.set(this, hwMap.get(field.getType(), field.getName()));
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception e) {
                         RobotLog.e("Error during reflection mapping");
                     }
                 } else if (HardwareDevice.class.isAssignableFrom(field.getType().getConstructors()[0].getParameterTypes()[0])) {

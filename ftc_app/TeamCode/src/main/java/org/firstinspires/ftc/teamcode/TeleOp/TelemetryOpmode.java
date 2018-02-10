@@ -76,27 +76,29 @@ public class TelemetryOpmode extends LinearOpMode {
 
     // Constants for teleop
     final double turnSpeed = 0.6;
-    final double fastSpeed = 0.85;
-    final double normalSpeed = 0.4;
-    final double slowSpeed = 0.4;
-    final double slowestSpeed = 0.2;
+    final double fastSpeed = 1;
+    final double slowSpeed = 0.8;
 
-    double horizotalSpeedMultiplier = 1;
+    //double horizotalSpeedMultiplier = 1;
     boolean reverse = false;
     int altClawPosition = 1;
     int upperClawPosition = 0;
     int altClawTurned = 1;
+
 
     // boolean releaseGlyphs;
     // boolean slowMode = true;
     boolean turningTowards = false;
     // boolean normalBumper = true;
 
+    FourWheelMecanumDrivetrain drivetrain;
+    RobotHardware robot;
     @Override
     public void runOpMode() throws InterruptedException {
 
-        RobotHardware robot = RobotHardware.GetSingleton(hardwareMap);
-        FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
+        robot = RobotHardware.GetSingleton(hardwareMap);
+        drivetrain = new FourWheelMecanumDrivetrain();
+
         robot.jewelArm1.setPosition(0.18);  //0.15
         robot.jewelArm2.setPosition(0.92);   //0.85
         robot.leftFlick.setPosition(0.61);
@@ -105,6 +107,7 @@ public class TelemetryOpmode extends LinearOpMode {
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
 
         robot.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.linearSlidePivotMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setSpeedMultiplier(slowSpeed);
         drivetrain.resetEncoders();
 
@@ -129,13 +132,24 @@ public class TelemetryOpmode extends LinearOpMode {
             if (!(gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0 && turn == 0) && !turningTowards) {
 
                 double speed = 1;
-                if (gamepad1.right_stick_y == 0) {
+                /* if (gamepad1.right_stick_y == 0) {
                     speed = 1.25 * horizotalSpeedMultiplier ;
-                    //speed = 1.25 ;
                 }
+                if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
+                    speed = 0;
+                } */
 
                 if (gamepad1.left_stick_x == 0 && gamepad1.right_stick_y == 0) {
                     speed = 0;
+                }
+                else if ( gamepad1.right_stick_y == 0 ) {
+                    speed = Math.abs(gamepad1.left_stick_x) ;
+                }
+                else if ( gamepad1.left_stick_x == 0 ) {
+                    speed = Math.abs(gamepad1.right_stick_y) ;
+                }
+                else {
+                    speed = ( Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_y) ) / 2;
                 }
 
                 double angle = Math.atan2(gamepad1.left_stick_x, -gamepad1.right_stick_y);
@@ -143,8 +157,6 @@ public class TelemetryOpmode extends LinearOpMode {
             } else {
                 drivetrain.stop();
             }
-            //endregion
-
 
             if (gamepad2.dpad_right) {
                 altClawPosition = 0;  // Complete closed
@@ -200,7 +212,7 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             else if (gamepad2.left_bumper) {
                 // if turning altClaw, make sure upperClaw is open before turning
-                robot.upperLeft.setPosition(0.23);
+                robot.upperLeft.setPosition(0.19);
                 robot.upperRight.setPosition(0.77);
                 upperClawPosition = 0;
                 //wait(200);
@@ -210,7 +222,7 @@ public class TelemetryOpmode extends LinearOpMode {
             }
             else if (gamepad2.right_bumper) {
                 // if turning altClaw, make sure upperClaw is open
-                robot.upperLeft.setPosition(0.23);
+                robot.upperLeft.setPosition(0.19);
                 robot.upperRight.setPosition(0.77);
                 upperClawPosition = 0;
                 //wait(200);
@@ -252,63 +264,40 @@ public class TelemetryOpmode extends LinearOpMode {
                     break;
                 case 4: // slight open
                     // release altClawTurned and upperClaw (in vertical glyph positions
-                    robot.altClawLeft.setPosition(0.59); //0.550
-                    robot.altClawRight.setPosition(0.37); //0.336
+                    robot.altClawLeft.setPosition(0.57); //0.550
+                    robot.altClawRight.setPosition(0.39); //0.336
                     break;
             }
 
             switch (upperClawPosition) {
                 case 0: // Resting
-                    robot.upperLeft.setPosition(0.23);
+                    robot.upperLeft.setPosition(0.19);
                     robot.upperRight.setPosition(0.77);
                     break;
                 case 1: // Grabbing
-                    robot.upperLeft.setPosition(0.62);  //0.6
-                    robot.upperRight.setPosition(0.34);  //0.36
+                    robot.upperLeft.setPosition(0.61);  //0.6
+                    robot.upperRight.setPosition(0.33);  //0.36
                     break;
                 case 2:  // slight open
-                    robot.upperLeft.setPosition(0.53);
-                    robot.upperRight.setPosition(0.41);
+                    robot.upperLeft.setPosition(0.55);
+                    robot.upperRight.setPosition(0.39);
                     break;
             }
 
-            // Toggle drive speed by comparing current and previous left_bumper status
-            /* if (gamepad1.left_bumper && !previousGamepad1.left_bumper) {
-                slowMode = !slowMode;
-                if (slowMode) {
-                    drivetrain.setSpeedMultiplier(slowSpeed);
-                }
-                else {
-                    drivetrain.setSpeedMultiplier(fastSpeed);
-                }
-            } */
-
-            /* if (gamepad1.guide && !previousGamepad1.guide) {
-                 normalBumper = !normalBumper;
-            } */
-
-            if (gamepad1.dpad_left || gamepad1.left_bumper) {
+            if (gamepad1.left_bumper) {
                 drivetrain.setSpeedMultiplier(fastSpeed);
-                horizotalSpeedMultiplier = 1;
-            }
-
-            if (gamepad1.dpad_up) {
-                drivetrain.setSpeedMultiplier(normalSpeed);
-                horizotalSpeedMultiplier = 1.4;
             }
             if (gamepad1.right_bumper) {
                 drivetrain.setSpeedMultiplier(slowSpeed);
-                horizotalSpeedMultiplier = 1;
-            }
-
-            if (gamepad1.dpad_right) {
-                drivetrain.setSpeedMultiplier(slowestSpeed);
-                horizotalSpeedMultiplier = 1.55;
             }
 
             if (gamepad2.guide || gamepad2.back) {
                 robot.jewelArm1.setPosition(0.18);
                 robot.jewelArm2.setPosition(0.85);
+            }
+
+            if (gamepad1.x) {
+                AutoMove(1, 0, 785);
             }
 
             double linearSlidePivotPower = (gamepad1.left_stick_button ? 1 : 0) + (gamepad1.right_stick_button ? -1 : 0);
@@ -342,6 +331,31 @@ public class TelemetryOpmode extends LinearOpMode {
 
     private void resetJewelArms() {
 
+    }
+
+    public void AutoMove(double speed, double angle, int counts) {
+        int initialForwardLeft = robot.forwardLeft.getCurrentPosition();
+        int initialForwardRight = robot.forwardRight.getCurrentPosition();
+        int initialBackwardLeft = robot.backLeft.getCurrentPosition();
+        int initialBackwardRight = robot.backRight.getCurrentPosition();
+
+        drivetrain.setSpeedMultiplier(slowSpeed);
+        drivetrain.MoveAngle(speed, angle, 0);
+
+        while (opModeIsActive()) {
+            int differenceForwardLeft = Math.abs(robot.forwardLeft.getCurrentPosition() - initialForwardLeft);
+            int differenceForwardRight = Math.abs(robot.forwardRight.getCurrentPosition() - initialForwardRight);
+            int differenceBackwardLeft = Math.abs(robot.backLeft.getCurrentPosition() - initialBackwardLeft);
+            int differenceBackwardRight= Math.abs(robot.backRight.getCurrentPosition() - initialBackwardRight);
+            if ((differenceBackwardLeft + differenceForwardLeft + differenceBackwardRight + differenceBackwardRight) / 4 > counts) {
+                drivetrain.stop();
+                break;
+            }
+            if (gamepad1.y) {
+                drivetrain.stop();
+                break;
+            }
+        }
     }
 
     public boolean between(double lower, double upper, double value) {

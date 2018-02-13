@@ -18,5 +18,11 @@ public abstract class TeleopEnabledTest {
         this.teleop = opMode;
     }
 
+    public void setOpMode(LinearOpMode opMode) {
+        this.teleop = opMode;
+    }
+
     public abstract void run();
+
+    public abstract void init();
 }

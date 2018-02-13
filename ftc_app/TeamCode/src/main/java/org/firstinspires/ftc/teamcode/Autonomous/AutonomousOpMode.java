@@ -136,12 +136,7 @@ public class AutonomousOpMode extends LinearOpMode {
         } else {
             hw.phoneServo1.setPosition(0.16);  // 0.27
         }
-        resetJewelArms();
 
-        /*if (hw.imu == null) {
-            hw.ReinitializeIMU();
-        }
-        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);*/
         resetJewelArms();
 
         //region Vuforia/Vision
@@ -187,21 +182,8 @@ public class AutonomousOpMode extends LinearOpMode {
                 }
             }
         };
-        Runnable motorDrop = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    hw.linearSlideDriveMotor.setPower(0.75);
-                    Thread.sleep(750);
-                    hw.linearSlideDriveMotor.setPower(0);
-                } catch (InterruptedException e) {
-
-                }
-            }
-        };
 
         Thread liftGlyph = new Thread(motorLift);
-        Thread dropGlpyh = new Thread(motorDrop);
 
         hw.altClawTurn.setPosition(0.5);  // center
         hw.upperLeft.setPosition(0.05);
@@ -212,9 +194,9 @@ public class AutonomousOpMode extends LinearOpMode {
         resetFlickers();
 
         vuforia.close();
-        detector = new CryptoboxDetector();
+        /*detector = new CryptoboxDetector();
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, red ? TeamColor.RED : TeamColor.BLUE);
-        detector.enable();
+        detector.enable();*/
         hw.upperLeft.setPosition(0.19);
         hw.upperRight.setPosition(0.77);
 
@@ -235,7 +217,7 @@ public class AutonomousOpMode extends LinearOpMode {
                     break;
             }
 
-            jewelArms(!red);
+            //jewelArms(!red);
 
             if (red) {
                 // hw.phoneServo2.setPosition(0.26); // 0.64
@@ -254,17 +236,18 @@ public class AutonomousOpMode extends LinearOpMode {
             flick(!red, order);
             sleep(500);
 
-            dropGlpyh.start();
+            //dropGlpyh.start();
 
             sleep(750);
 
-            resetJewelArms();
-            resetFlickers();
+            //resetJewelArms();
+            //resetFlickers();
 
             // Close altClaw
             hw.altClawLeft.setPosition(0.67);  //0.610
             hw.altClawRight.setPosition(0.30);  //0.276
             sleep(500);
+
             liftGlyph.start();
             sleep(1000);
 
@@ -281,7 +264,8 @@ public class AutonomousOpMode extends LinearOpMode {
                             AutoMove(0.25, 0, 1834);
                             break;
                     }
-                    drivetrain.GyroTurn(0.15, -90);
+                    // drivetrain.GyroTurn(0.15, -90);
+                    drivetrain.
                 } else {
                     switch (vumark) {
                         case LEFT:
@@ -294,7 +278,7 @@ public class AutonomousOpMode extends LinearOpMode {
                             AutoMove(0.25, 0, 1909);
                             break;
                     }
-                    drivetrain.GyroTurn(0.15, 90);
+                    // drivetrain.GyroTurn(0.15, 90);
                 }
             } else {
                 AutoMove(0.25, 0, 1050);
@@ -347,15 +331,15 @@ public class AutonomousOpMode extends LinearOpMode {
 
             if (close) {
                 if (red) {
-                    drivetrain.GyroTurn(0.4, 90);
+                    // drivetrain.GyroTurn(0.4, 90);
                 } else {
-                    drivetrain.GyroTurn(0.4, -90);
+                    // drivetrain.GyroTurn(0.4, -90);
                 }
             } else {
                 if (red) {
-                    drivetrain.GyroTurn(0.4, -180);
+                    // drivetrain.GyroTurn(0.4, -180);
                 } else {
-                    drivetrain.GyroTurn(0.4, 180);
+                    // drivetrain.GyroTurn(0.4, 180);
                 }
             }
             AutoMoveByTime(-0.8, 0, 370, 2000);
@@ -367,8 +351,6 @@ public class AutonomousOpMode extends LinearOpMode {
 
             requestOpModeStop();
         }
-
-        hw.imu.stopAccelerationIntegration();
 
     }
 
@@ -650,181 +632,6 @@ public class AutonomousOpMode extends LinearOpMode {
             drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
             drivetrain.stop();
         }
-    }
-
-    private void lightCrypto(double speed, double p, Direction direction, Direction desired, boolean blue, int offset) {
-        int backLeftStart = hw.backLeft.getCurrentPosition();
-        int backRightStart = hw.backRight.getCurrentPosition();
-        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
-        int forwardRightStart = hw.forwardRight.getCurrentPosition();
-        int count = 0;
-        double firstTime = 0;
-        double adjustedOffset = offset;
-        if (opposite(direction) == desired) {
-            adjustedOffset += 25;
-            RobotLog.i("opp dir");
-        }
-
-        Encoders first = null;
-        Encoders second = null;
-        Encoders middle = null;
-
-        double dominantColor;
-        double secondaryColor;
-        double multiplier;
-
-        while (opModeIsActive()) {
-            double timeElapsed = runtime.milliseconds() - firstTime;
-            if (blue) {
-                dominantColor = hw.bottom_color.blue();
-                secondaryColor = hw.bottom_color.red();
-                multiplier = 1.25;
-            } else {
-                dominantColor = hw.bottom_color.red();
-                secondaryColor = hw.bottom_color.blue();
-                multiplier = 1.25;
-            }
-
-            if (dominantColor > (secondaryColor * multiplier)) {
-
-                first = new Encoders(hw);
-                while (opModeIsActive() && dominantColor > (secondaryColor * multiplier)) {
-                    if (blue) {
-                        dominantColor = hw.bottom_color.blue();
-                        secondaryColor = hw.bottom_color.red();
-                    } else {
-                        dominantColor = hw.bottom_color.red();
-                        secondaryColor = hw.bottom_color.blue();
-                    }
-                }
-                while (opModeIsActive() && !(dominantColor > (secondaryColor * multiplier))) {
-                    if (blue) {
-                        dominantColor = hw.bottom_color.blue();
-                        secondaryColor = hw.bottom_color.red();
-                    } else {
-                        dominantColor = hw.bottom_color.red();
-                        secondaryColor = hw.bottom_color.blue();
-                    }
-                }
-                while (opModeIsActive() && (dominantColor > (secondaryColor * multiplier))) {
-                    if (blue) {
-                        dominantColor = hw.bottom_color.blue();
-                        secondaryColor = hw.bottom_color.red();
-                        multiplier = 1.25;
-                    } else {
-                        dominantColor = hw.bottom_color.red();
-                        secondaryColor = hw.bottom_color.blue();
-                        multiplier = 1.25;
-                    }
-                }
-                second = new Encoders(hw);
-                middle = first.average(second);
-                middle.applyOffset(desired, adjustedOffset);
-                middle.set(drivetrain, hw);
-                drivetrain.setPowerAll(speed);
-                break;
-
-            }
-
-            int backLeft = hw.backLeft.getCurrentPosition();
-            int backRight = hw.backRight.getCurrentPosition();
-            int forwardLeft = hw.forwardLeft.getCurrentPosition();
-            int forwardRight = hw.forwardRight.getCurrentPosition();
-
-            int backLeftDiff = Math.abs(backLeft - backLeftStart);
-            int backRightDiff = Math.abs(backRight - backRightStart);
-            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
-            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
-
-            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
-            double backLeftComp = (avg - backLeftDiff) * p;
-            double backRightComp = (avg - backRightDiff) * p;
-            double forwardLeftComp = (avg - forwardLeftDiff) * p;
-            double forwardRightComp = (avg - forwardRightDiff) * p;
-
-            switch (direction) {
-                case LEFT:
-                    hw.forwardRight.setPower(speed + forwardRightComp);
-                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
-                    hw.backRight.setPower(-speed - backRightComp);
-                    hw.backLeft.setPower(speed + backLeftComp);
-                    break;
-                case RIGHT:
-                    hw.forwardRight.setPower(-speed - forwardRightComp);
-                    hw.forwardLeft.setPower(speed + forwardLeftComp);
-                    hw.backRight.setPower(speed + backRightComp);
-                    hw.backLeft.setPower(-speed - backLeftComp);
-                    break;
-
-            }
-        }
-        double start = runtime.milliseconds();
-        double timeout = 8000;
-        Encoders e;
-        e = new Encoders(hw);
-        Encoders f = new Encoders(hw);
-        int finaloffset = 150;
-        double diff;
-        boolean moving = true;
-        double previousMs = runtime.milliseconds();
-        while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
-            e = new Encoders(hw);
-            double difference = e.totalDiff(middle);
-            double avg = difference / 4;
-            if (avg < 30) {
-                break;
-            }
-        }
-
-        drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        drivetrain.stop();
-    }
-
-
-    private void crypto(int ticks, double speed, double p, Direction direction) {
-        int backLeftStart = hw.backLeft.getCurrentPosition();
-        int backRightStart = hw.backRight.getCurrentPosition();
-        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
-        int forwardRightStart = hw.forwardRight.getCurrentPosition();
-        int currentTicks = 0;
-        while (opModeIsActive() && currentTicks < ticks) {
-            double distance = hw.ultrasonic.distance();
-            if (distance < 5) {
-
-            }
-
-            int backLeft = hw.backLeft.getCurrentPosition();
-            int backRight = hw.backRight.getCurrentPosition();
-            int forwardLeft = hw.forwardLeft.getCurrentPosition();
-            int forwardRight = hw.forwardRight.getCurrentPosition();
-
-            int backLeftDiff = Math.abs(backLeft - backLeftStart);
-            int backRightDiff = Math.abs(backRight - backRightStart);
-            int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
-            int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
-
-            double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
-            double backLeftComp = (avg - backLeftDiff) * p;
-            double backRightComp = (avg - backRightDiff) * p;
-            double forwardLeftComp = (avg - forwardLeftDiff) * p;
-            double forwardRightComp = (avg - forwardRightDiff) * p;
-            switch (direction) {
-                case LEFT:
-                    hw.forwardRight.setPower(speed + forwardRightComp);
-                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
-                    hw.backRight.setPower(-speed - backRightComp);
-                    hw.backLeft.setPower(speed + backLeftComp);
-                    break;
-                case RIGHT:
-                    hw.forwardRight.setPower(-speed - forwardRightComp);
-                    hw.forwardLeft.setPower(speed + forwardLeftComp);
-                    hw.backRight.setPower(speed + backRightComp);
-                    hw.backLeft.setPower(-speed - backLeftComp);
-                    break;
-
-            }
-        }
-        drivetrain.stop();
     }
 
     private void release() {

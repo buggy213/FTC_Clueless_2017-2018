@@ -22,6 +22,9 @@ import com.qualcomm.robotcore.util.RobotLog;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Joshua on 9/9/2017.
@@ -55,12 +58,8 @@ public class RobotHardware {
     public Servo leftFlick;
     public Servo rightFlick;
 
-    public ColorSensor left_color;
-    public ColorSensor right_color;
-    public ColorSensor bottom_color;
-
-    public LVEZ4 ultrasonic;
-    public BNO055IMU imu;
+    public List<Field> dcMotors = new ArrayList<>();
+    public List<Field> servos = new ArrayList<>();
 
     // Initializes the BNO055 IMU built into the REV Expansion Hub
     public void ReinitializeIMU() {
@@ -72,9 +71,6 @@ public class RobotHardware {
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-        imu = hwMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
 
     }
     public static void SetCurrentRunningOpMode(LinearOpMode opMode) {
@@ -103,12 +99,19 @@ public class RobotHardware {
     public RobotHardware(HardwareMap map) {
         this.hwMap = map;
 
-        // Reflection mapping; program looks at itself to determine what fieldsshould be initialized and to what values
+        // Reflection mapping; program looks at itself to determine what fields should be initialized and to what values
         Field[] allFields = this.getClass().getDeclaredFields();
         for (Field field : allFields) {
             RobotLog.i(field.getName() + ":" + field.getType());
             try {
                 if (HardwareDevice.class.isAssignableFrom(field.getType())) {
+
+                    if (DcMotor.class.isAssignableFrom(field.getType())) {
+                        dcMotors.add(field);
+                    }
+                    if (Servo.class.isAssignableFrom(field.getType())) {
+                        servos.add(field);
+                    }
 
                     // Hardware device, try to assign
                     try {

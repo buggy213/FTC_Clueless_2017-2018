@@ -10,6 +10,10 @@ public class TurnTest extends TeleopEnabledTest{
 
     int amount = 0;
 
+    public void init() {
+
+    }
+
     @Override
     public void run() {
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
@@ -33,7 +37,7 @@ public class TurnTest extends TeleopEnabledTest{
                 amount += (teleop.gamepad1.b) ? -1 : 0;
 
             }
- 
+
             drivetrain.EncoderTurn(0.15, amount, false);
         }
     }

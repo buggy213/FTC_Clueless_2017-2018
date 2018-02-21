@@ -14,9 +14,16 @@ import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 public class TurnTest extends TeleopEnabledTest{
 
     int amount = 0;
+
+    @Override
+    public void init() {
+        description = "Encoder turn testing program";
+    }
+
     double previousTime;
     RobotHardware hw = RobotHardware.GetSingleton();
     ElapsedTime timer = new ElapsedTime();
+
     @Override
     public void run() {
         FourWheelMecanumDrivetrain drivetrain = new FourWheelMecanumDrivetrain();
@@ -46,7 +53,6 @@ public class TurnTest extends TeleopEnabledTest{
                 amount += (teleop.gamepad1.b) ? deltaTime * -10 : 0;
                 previousTime = timer.milliseconds();
             }
-
             drivetrain.EncoderTurn(0.15, amount, clockwise);
         }
     }

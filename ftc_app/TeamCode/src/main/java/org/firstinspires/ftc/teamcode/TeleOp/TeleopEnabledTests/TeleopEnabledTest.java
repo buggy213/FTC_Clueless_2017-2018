@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 public abstract class TeleopEnabledTest {
     LinearOpMode teleop;
 
+    public String description;
+
     public TeleopEnabledTest() {
 
     }
@@ -21,4 +23,6 @@ public abstract class TeleopEnabledTest {
     }
 
     public abstract void run();
+
+    public abstract void init();
 }

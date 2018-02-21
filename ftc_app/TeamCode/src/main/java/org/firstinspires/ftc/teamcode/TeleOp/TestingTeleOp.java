@@ -60,29 +60,39 @@ public class TestingTeleOp extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    // Gamepad previousGamepad1 = new Gamepad();
-    // Gamepad previousGamepad2 = new Gamepad();
 
     // Constants for teleop
     final double turnSpeed = 0.6;
     final double fastSpeed = 1;
     final double slowSpeed = 0.8;
-
-    //double horizotalSpeedMultiplier = 1;
     boolean reverse = false;
     boolean testing = true;
     int altClawPosition = 1;
     int upperClawPosition = 0;
     int altClawTurned = 1;
     int index = 0;
-
-    // boolean releaseGlyphs;
-    // boolean slowMode = true;
     boolean turningTowards = false;
-    // boolean normalBumper = true;
+
+    TeleopEnabledTest test;
 
     FourWheelMecanumDrivetrain drivetrain;
     RobotHardware robot;
+
+    public void setTest(int index) {
+        try {
+            test = TeleopEnabledTestRegistrar.teleopEnabledTestClasses.get(index).newInstance();
+            test.setOpMode(this);
+            test.init();
+        }
+        catch (Exception e) {
+            RobotLog.e(e.toString());
+            telemetry.addData("ERROR", "Critical error in instantiating new test, check log for details");
+            telemetry.update();
+            sleep(1500);
+            requestOpModeStop();
+        }
+    }
+
     @Override
     public void runOpMode() throws InterruptedException {
         TeleopEnabledTestRegistrar.LoadTests();
@@ -105,14 +115,12 @@ public class TestingTeleOp extends LinearOpMode {
         robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
         robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // telemetry.addData("Status", "Initialized");
-        // telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
 
-
+        setTest(0);
 
         robot.altClawTurn.setPosition(0.5);  // center
 
@@ -131,12 +139,14 @@ public class TestingTeleOp extends LinearOpMode {
 
             if (gamepad1.a) {
                 if (index > 0) {
-                   index--;
+                    index--;
+                    setTest(index);
                 }
             }
             if (gamepad1.b) {
                 if (index < (TeleopEnabledTestRegistrar.teleopEnabledTestClasses.size() - 1)) {
                     index++;
+                    setTest(index);
                 }
             }
 
@@ -147,13 +157,12 @@ public class TestingTeleOp extends LinearOpMode {
                 testing = true;
             }
 
-            telemetry.addData("Selected", TeleopEnabledTestRegistrar.teleopEnabledTestClasses.get(index).getName());
+            telemetry.addData("Name", test.getClass().getSimpleName());
+            telemetry.addData("Description", test.description);
 
             if (gamepad1.x) {
                 try {
                     testing = true;
-                    TeleopEnabledTest test = TeleopEnabledTestRegistrar.teleopEnabledTestClasses.get(index).newInstance();
-                    test.setOpMode(this);
                     test.run();
                 }
                 catch (Exception e){

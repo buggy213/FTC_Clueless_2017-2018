@@ -47,6 +47,23 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         stop();
     }
 
+    public void AutoMove(double speed, double angle, int counts) {
+        int initialForward = rw.forwardLeft.getCurrentPosition();
+        int initialBackward = rw.backLeft.getCurrentPosition();
+
+        MoveAngle(speed, angle, 0);
+
+        while (runningOpMode.opModeIsActive()) {
+            int differenceForward = Math.abs(rw.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(rw.backLeft.getCurrentPosition() - initialBackward);
+
+            if ((differenceBackward + differenceForward) / 2 > counts) {
+                stop();
+                break;
+            }
+        }
+    }
+
     public void AutoMove(Direction direction, double speed, double time) throws InterruptedException{
         MoveCardinal(direction, (float)speed);
         Thread.sleep((long)(time * 1000));

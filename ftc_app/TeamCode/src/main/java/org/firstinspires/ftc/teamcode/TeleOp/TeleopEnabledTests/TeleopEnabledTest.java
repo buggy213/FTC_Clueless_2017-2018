@@ -22,7 +22,7 @@ public abstract class TeleopEnabledTest {
         this.teleop = opMode;
     }
 
-    public abstract void run();
+    public abstract void run() throws InterruptedException;
 
     public abstract void init();
 }

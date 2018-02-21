@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 import android.graphics.Bitmap;
 import android.util.Pair;
 
-import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.detectors.JewelDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
@@ -41,7 +40,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.RobotLog;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -59,8 +57,6 @@ import org.firstinspires.ftc.teamcode.Shared.ClosableVuforiaLocalizer;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
-import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
-import org.firstinspires.ftc.teamcode.Test.TeamColor;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -97,7 +93,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
     final int maxBufferResults = 25;
 
     // Used to access robot hardware
-    RobotHardware hw;
+    RobotHardware robot;
 
     FourWheelMecanumDrivetrain drivetrain;
 
@@ -131,7 +127,80 @@ public class GyroAutonomousOpMode extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
     }
+    public void TwoSpeedGyroTurn(double firstSpeed, double secondSpeed, double thresholdAngle, double finalAngle) {
+        // Angle is counterclockwise (sorry)
 
+        double normalizedHeading = normalize(getHeading());
+        double normalizedThresholdAngle = normalize(thresholdAngle);
+        double normalizedFinalAngle = normalize(finalAngle);
+        double angleDiff = normalizedHeading - normalizedFinalAngle;
+
+        angleDiff = (angleDiff / 180) * Math.PI;
+        double c = sin(angleDiff);
+        if (c >= 0) {
+            // CW
+            drivetrain.MoveAngle(0, 0, firstSpeed);
+
+        }
+        else if (c < 0) {
+            // CCW
+            drivetrain.MoveAngle(0, 0, -firstSpeed);
+        }
+
+        while (opModeIsActive()) {
+            double angle1 = normalize(normalizedThresholdAngle + turnThreshold);
+            double angle2 = normalize(normalizedThresholdAngle - turnThreshold);
+            double target = normalize(getHeading());
+            double diff = normalize(angle2 - angle1);
+            if (diff > 180) {
+                double temp = angle1;
+                angle1 = angle2;
+                angle2 = temp;
+            }
+            boolean withinFirst = false;
+            if (angle1 <= angle2) {
+                withinFirst = target >= angle1 && target <= angle2;
+            }
+
+            else {
+                withinFirst = target >= angle1 || target <= angle2;
+            }
+
+            if (withinFirst) {
+                if (c >= 0) {
+                    // CW
+                    drivetrain.MoveAngle(0, 0, secondSpeed);
+
+                }
+                else if (c < 0) {
+                    // CCW
+                    drivetrain.MoveAngle(0, 0, -secondSpeed);
+                }
+            }
+
+            double angle3 = normalize(normalizedFinalAngle + turnThreshold);
+            double angle4 = normalize(normalizedFinalAngle - turnThreshold);
+            double diff1 = normalize(angle4 - angle3);
+            if (diff1 > 180) {
+                double temp = angle1;
+                angle3 = angle4;
+                angle4 = temp;
+            }
+            boolean withinSecond = false;
+            if (angle1 <= angle2) {
+                withinSecond = target >= angle1 && target <= angle2;
+            }
+
+            else {
+                withinSecond = target >= angle1 || target <= angle2;
+            }
+
+            if (withinSecond) {
+                drivetrain.stop();
+                break;
+            }
+        }
+    }
     public void GyroTurn(double speed, double angle) {
         // Angle is counterclockwise (sorry)
 
@@ -186,7 +255,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
     }
     @Override
     public void runOpMode() throws InterruptedException {
-        hw = RobotHardware.GetSingleton(hardwareMap);
+        robot = RobotHardware.GetSingleton(hardwareMap);
         RobotHardware.SetCurrentRunningOpMode(this);
         String mode = "";
         MatchParameters parameters = MatchParameters.current;
@@ -203,9 +272,9 @@ public class GyroAutonomousOpMode extends LinearOpMode {
         boolean red = mode.contains("RED");
         drivetrain = new FourWheelMecanumDrivetrain();
         drivetrain.setRunningOpMode(this);
-        hw.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        hw.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        hw.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.linearSlideDriveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.forwardRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         drivetrain.setMotorZeroPower(DcMotor.ZeroPowerBehavior.BRAKE);
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -232,9 +301,9 @@ public class GyroAutonomousOpMode extends LinearOpMode {
 
 
         if (red) {
-            hw.phoneServo2.setPosition(0.67); // 0.64
+            robot.phoneServo2.setPosition(0.67); // 0.64
         } else {
-            hw.phoneServo1.setPosition(0.16);  // 0.27
+            robot.phoneServo1.setPosition(0.16);  // 0.27
         }
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -252,9 +321,9 @@ public class GyroAutonomousOpMode extends LinearOpMode {
         relicTrackables.activate();
         //endregion
 
-        hw.altClawTurn.setPosition(0.5);  // center
-        hw.upperLeft.setPosition(0.05);
-        hw.upperRight.setPosition(0.90);
+        robot.altClawTurn.setPosition(0.5);  // center
+        robot.upperLeft.setPosition(0.05);
+        robot.upperRight.setPosition(0.90);
         // Wait for the game to start (driver presses PLAY)
         waitForStart(red);
 
@@ -264,8 +333,8 @@ public class GyroAutonomousOpMode extends LinearOpMode {
 
         resetFlickers();
 
-        hw.upperLeft.setPosition(0.19);
-        hw.upperRight.setPosition(0.77);
+        robot.upperLeft.setPosition(0.19);
+        robot.upperRight.setPosition(0.77);
 
         runtime.reset();
 
@@ -291,60 +360,60 @@ public class GyroAutonomousOpMode extends LinearOpMode {
 
 
 
-            hw.linearSlideDriveMotor.setPower(-0.75);
+            robot.linearSlideDriveMotor.setPower(-0.75);
             sleep(1200);
-            hw.linearSlideDriveMotor.setPower(0);
+            robot.linearSlideDriveMotor.setPower(0);
 
             // Open altClaw
-            hw.altClawLeft.setPosition(0.29);  // 0.225
-            hw.altClawRight.setPosition(0.65);  // 0.727
+            robot.altClawLeft.setPosition(0.29);  // 0.225
+            robot.altClawRight.setPosition(0.65);  // 0.727
 
             flick(!red, order);
             sleep(500);
 
-            hw.linearSlideDriveMotor.setPower(0.75);
+            robot.linearSlideDriveMotor.setPower(0.75);
             sleep(750);
-            hw.linearSlideDriveMotor.setPower(0);
+            robot.linearSlideDriveMotor.setPower(0);
 
             resetJewelArms();
             resetFlickers();
 
             // Close altClaw
-            hw.altClawLeft.setPosition(0.67);  //0.610
-            hw.altClawRight.setPosition(0.30);  //0.276
+            robot.altClawLeft.setPosition(0.67);  //0.610
+            robot.altClawRight.setPosition(0.30);  //0.276
             sleep(500);
 
-            hw.linearSlideDriveMotor.setPower(-0.75);
+            robot.linearSlideDriveMotor.setPower(-0.75);
             sleep(1000);
-            hw.linearSlideDriveMotor.setPower(0);
+            robot.linearSlideDriveMotor.setPower(0);
 
             if (close) {
                 if (red) {
                     switch (vumark) {
                         case RIGHT:
-                            AutoMove(0.25, 0, 1240);
+                            AutoMove(0.325, 0, 1240);
                             break;
                         case FORWARD:
-                            AutoMove(0.25, 0, 1572);
+                            AutoMove(0.325, 0, 1572);
                             break;
                         case LEFT:
-                            AutoMove(0.25, 0, 1904);
+                            AutoMove(0.325, 0, 1904);
                             break;
                     }
                     GyroTurn(0.15, -90);
                 } else {
                     switch (vumark) {
                         case LEFT:
-                            AutoMove(0.25, 0, 1203);
+                            AutoMove(0.325, 0, 1203);
                             break;
                         case FORWARD:
-                            AutoMove(0.25, 0, 1547);
+                            AutoMove(0.325, 0, 1547);
                             break;
                         case RIGHT:
-                            AutoMove(0.25, 0, 1889);
+                            AutoMove(0.325, 0, 1889);
                             break;
                     }
-                    GyroTurn(0.15, 90);
+                    GyroTurn(0.25, 90);
                 }
             } else {
                 AutoMove(0.25, 0, 1050);
@@ -381,9 +450,9 @@ public class GyroAutonomousOpMode extends LinearOpMode {
             AutoMove(0.25, 0, 325);
             AutoMove(-0.25, 0, 25);
 
-            hw.linearSlideDriveMotor.setPower(0.75);
+            robot.linearSlideDriveMotor.setPower(0.75);
             sleep(500);
-            hw.linearSlideDriveMotor.setPower(0);
+            robot.linearSlideDriveMotor.setPower(0);
 
             release();
             AutoMove(-0.5, 0, 200);
@@ -391,42 +460,62 @@ public class GyroAutonomousOpMode extends LinearOpMode {
                 AutoMove(0.2, vumark == Direction.RIGHT ? -90 : 90, 175);
             }
 
-            hw.altClawLeft.setPosition(0.88);
-            hw.altClawRight.setPosition(0.12);
 
             if (close) {
                 if (red) {
-                    GyroTurn(0.4, 90);
+                    GyroTurn(0.2, 90);
                 } else {
-                    GyroTurn(0.4, -90);
+                    GyroTurn(0.2, -90);
                 }
             } else {
-                if (red) {
-                    GyroTurn(0.4, 180);
-                } else {
-                    GyroTurn(0.4, 180);
-                }
+                GyroTurn(0.4,180);
             }
             AutoMoveByTime(-0.8, 0, 370, 2000);
             AutoMove(0.8, 0, 100);
 
+            // Only attempt multi-glyph auto if in close position (for now)
+            if (close) {
+                robot.altClawLeft.setPosition(0.29);
+                robot.altClawRight.setPosition(0.65);
+                robot.upperLeft.setPosition(0.19);
+                robot.upperRight.setPosition(0.77);
+                drivetrain.AutoMove(0.8, 0, 1000);
+                robot.altClawLeft.setPosition(0.67);  //0.610
+                robot.altClawRight.setPosition(0.30);  //0.276
+                robot.upperLeft.setPosition(0.61);  //0.6
+                robot.upperRight.setPosition(0.33);  //0.36
+                Thread.sleep(1000);
+                drivetrain.AutoMove(-0.4, 0, 800);
+                if (red) {
+                    GyroTurn(0.3, -90);
+                }
+                else {
+                    GyroTurn(0.3, 90);
+                }
+
+            }
+
+
+            robot.altClawLeft.setPosition(0.88);
+            robot.altClawRight.setPosition(0.12);
+
             release();
-            hw.upperLeft.setPosition(0.05);
-            hw.upperRight.setPosition(0.90);
+            robot.upperLeft.setPosition(0.05);
+            robot.upperRight.setPosition(0.90);
 
             requestOpModeStop();
         }
     }
 
     public void AutoMove(double speed, double angle, int counts) {
-        int initialForward = hw.forwardLeft.getCurrentPosition();
-        int initialBackward = hw.backLeft.getCurrentPosition();
+        int initialForward = robot.forwardLeft.getCurrentPosition();
+        int initialBackward = robot.backLeft.getCurrentPosition();
 
         drivetrain.MoveAngle(speed, angle, 0);
 
         while (opModeIsActive()) {
-            int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
-            int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
+            int differenceForward = Math.abs(robot.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(robot.backLeft.getCurrentPosition() - initialBackward);
             telemetry.addData("d1", differenceForward);
             telemetry.addData("d2", differenceBackward);
             telemetry.update();
@@ -439,14 +528,14 @@ public class GyroAutonomousOpMode extends LinearOpMode {
 
     public void AutoMoveByTime(double speed, double angle, int counts, double timeout) {
         double start = runtime.milliseconds();
-        int initialForward = hw.forwardLeft.getCurrentPosition();
-        int initialBackward = hw.backLeft.getCurrentPosition();
+        int initialForward = robot.forwardLeft.getCurrentPosition();
+        int initialBackward = robot.backLeft.getCurrentPosition();
 
         drivetrain.MoveAngle(speed, angle, 0);
 
         while (opModeIsActive() && runtime.milliseconds() - start < timeout) {
-            int differenceForward = Math.abs(hw.forwardLeft.getCurrentPosition() - initialForward);
-            int differenceBackward = Math.abs(hw.backLeft.getCurrentPosition() - initialBackward);
+            int differenceForward = Math.abs(robot.forwardLeft.getCurrentPosition() - initialForward);
+            int differenceBackward = Math.abs(robot.backLeft.getCurrentPosition() - initialBackward);
             telemetry.addData("d1", differenceForward);
             telemetry.addData("d2", differenceBackward);
             telemetry.update();
@@ -461,37 +550,37 @@ public class GyroAutonomousOpMode extends LinearOpMode {
 
         if (left) {
             if (order == JewelDetector.JewelOrder.RED_BLUE) {
-                hw.leftFlick.setPosition(1); // Flick back
+                robot.leftFlick.setPosition(1); // Flick back
             } else {
-                hw.leftFlick.setPosition(0); // Flick forward
+                robot.leftFlick.setPosition(0); // Flick forward
             }
         } else {
             if (order == JewelDetector.JewelOrder.RED_BLUE) {
                 // Flick back
-                hw.rightFlick.setPosition(0);
+                robot.rightFlick.setPosition(0);
             } else {
                 // Flick forward
-                hw.rightFlick.setPosition(1);
+                robot.rightFlick.setPosition(1);
             }
         }
     }
 
     void resetFlickers() {
-        hw.leftFlick.setPosition(0.42);
-        hw.rightFlick.setPosition(0.50);
+        robot.leftFlick.setPosition(0.42);
+        robot.rightFlick.setPosition(0.50);
     }
 
     private void moveHorizontal(double speed, double p, double amount, Direction direction) {
-        int backLeftStart = hw.backLeft.getCurrentPosition();
-        int backRightStart = hw.backRight.getCurrentPosition();
-        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
-        int forwardRightStart = hw.forwardRight.getCurrentPosition();
+        int backLeftStart = robot.backLeft.getCurrentPosition();
+        int backRightStart = robot.backRight.getCurrentPosition();
+        int forwardLeftStart = robot.forwardLeft.getCurrentPosition();
+        int forwardRightStart = robot.forwardRight.getCurrentPosition();
 
         while (opModeIsActive()) {
-            int backLeft = hw.backLeft.getCurrentPosition();
-            int backRight = hw.backRight.getCurrentPosition();
-            int forwardLeft = hw.forwardLeft.getCurrentPosition();
-            int forwardRight = hw.forwardRight.getCurrentPosition();
+            int backLeft = robot.backLeft.getCurrentPosition();
+            int backRight = robot.backRight.getCurrentPosition();
+            int forwardLeft = robot.forwardLeft.getCurrentPosition();
+            int forwardRight = robot.forwardRight.getCurrentPosition();
 
             int backLeftDiff = Math.abs(backLeft - backLeftStart);
             int backRightDiff = Math.abs(backRight - backRightStart);
@@ -509,16 +598,16 @@ public class GyroAutonomousOpMode extends LinearOpMode {
             }
             switch (direction) {
                 case LEFT:
-                    hw.forwardRight.setPower(speed + forwardRightComp);
-                    hw.forwardLeft.setPower(-speed - forwardLeftComp);
-                    hw.backRight.setPower(-speed - backRightComp);
-                    hw.backLeft.setPower(speed + backLeftComp);
+                    robot.forwardRight.setPower(speed + forwardRightComp);
+                    robot.forwardLeft.setPower(-speed - forwardLeftComp);
+                    robot.backRight.setPower(-speed - backRightComp);
+                    robot.backLeft.setPower(speed + backLeftComp);
                     break;
                 case RIGHT:
-                    hw.forwardRight.setPower(-speed - forwardRightComp);
-                    hw.forwardLeft.setPower(speed + forwardLeftComp);
-                    hw.backRight.setPower(speed + backRightComp);
-                    hw.backLeft.setPower(-speed - backLeftComp);
+                    robot.forwardRight.setPower(-speed - forwardRightComp);
+                    robot.forwardLeft.setPower(speed + forwardLeftComp);
+                    robot.backRight.setPower(speed + backRightComp);
+                    robot.backLeft.setPower(-speed - backLeftComp);
                     break;
 
             }
@@ -529,21 +618,21 @@ public class GyroAutonomousOpMode extends LinearOpMode {
     }
 
     private void release() {
-        hw.altClawLeft.setPosition(0.29);
-        hw.altClawRight.setPosition(0.65);
+        robot.altClawLeft.setPosition(0.29);
+        robot.altClawRight.setPosition(0.65);
     }
 
     private void jewelArms(boolean left) {
         if (left) {
-            hw.jewelArm1.setPosition(0.76);  // 0.511
+            robot.jewelArm1.setPosition(0.76);  // 0.511
         } else {
-            hw.jewelArm2.setPosition(0.34); // 0.349
+            robot.jewelArm2.setPosition(0.34); // 0.349
         }
     }
 
     private void resetJewelArms() {
-        hw.jewelArm1.setPosition(0.18);
-        hw.jewelArm2.setPosition(0.90);
+        robot.jewelArm1.setPosition(0.18);
+        robot.jewelArm2.setPosition(0.90);
     }
 
     public void waitForStart(boolean red) {
@@ -586,7 +675,9 @@ public class GyroAutonomousOpMode extends LinearOpMode {
                     }
                     Results results = analyzeBuffer();
                     telemetry.addData("Vision", results.toString());
+                    telemetry.addData("Current Order / VuMark", order.toString() + vm.toString());
                     telemetry.update();
+
                     lastKnownVumark = vm;
                     this.order = order;
                     frame.close();

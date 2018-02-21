@@ -25,7 +25,6 @@ public class Test extends OpMode {
     ColorSensor rightColor;
 
     ElapsedTime timer;
-    //DistanceSensor distanceSensor;
     double previousTime;
 
     double servoPos1 = 0.5;

@@ -34,6 +34,8 @@ import android.util.Pair;
 
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.detectors.JewelDetector;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -44,7 +46,12 @@ import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
@@ -64,6 +71,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import static java.lang.Math.sin;
 import static java.util.Collections.max;
 
 
@@ -80,8 +88,8 @@ import static java.util.Collections.max;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name = "Autonomous", group = "Linear Opmode")
-public class AutonomousOpMode extends LinearOpMode {
+@Autonomous(name = "Gyro Autonomous", group = "Linear Opmode")
+public class GyroAutonomousOpMode extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -97,6 +105,8 @@ public class AutonomousOpMode extends LinearOpMode {
     ClosableVuforiaLocalizer vuforia;
 
 
+    final double turnThreshold = 2;
+
     JewelDetector jewels = new JewelDetector();
 
     // Instance of relic trackable
@@ -106,7 +116,74 @@ public class AutonomousOpMode extends LinearOpMode {
     JewelDetector.JewelOrder order;
 
     LinkedList<Pair<RelicRecoveryVuMark, JewelDetector.JewelOrder>> resultsBuffer = new LinkedList<>();
+    BNO055IMU imu;
 
+    public void ReinitializeIMU() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+    }
+
+    public void GyroTurn(double speed, double angle) {
+        // Angle is counterclockwise (sorry)
+
+        double normalizedHeading = normalize(getHeading());
+        double normalizedAngle = normalize(angle);
+        double angleDiff = normalizedHeading - normalizedAngle;
+
+        angleDiff = (angleDiff / 180) * Math.PI;
+        double c = sin(angleDiff);
+        if (c >= 0) {
+            // CW
+            drivetrain.MoveAngle(0, 0, speed);
+
+        }
+        else if (c < 0) {
+            // CCW
+            drivetrain.MoveAngle(0, 0, -speed);
+        }
+
+        while (opModeIsActive()) {
+            double angle1 = normalize(angle + turnThreshold);
+            double angle2 = normalize(angle - turnThreshold);
+            double target = normalize(getHeading());
+            double diff = normalize(angle2 - angle1);
+            if (diff > 180) {
+                double temp = angle1;
+                angle1 = angle2;
+                angle2 = temp;
+            }
+            boolean within = false;
+            if (angle1 <= angle2) {
+                within = target >= angle1 && target <= angle2;
+            }
+
+            else {
+                within = target >= angle1 || target <= angle2;
+            }
+
+            if (within) {
+                drivetrain.stop();
+                break;
+            }
+        }
+    }
+    double normalize(double angle) {
+        angle = (360 + angle % 360) % 360;
+        return angle;
+    }
+
+    double getHeading() {
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+    }
     @Override
     public void runOpMode() throws InterruptedException {
         hw = RobotHardware.GetSingleton(hardwareMap);
@@ -134,10 +211,10 @@ public class AutonomousOpMode extends LinearOpMode {
 
         resetJewelArms();
 
-        /*if (hw.imu == null) {
-            hw.ReinitializeIMU();
+        if (imu == null) {
+            ReinitializeIMU();
         }
-        hw.imu.startAccelerationIntegration(new Position(), new Velocity(), 16);*/
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 16);
         resetJewelArms();
 
         //region Vuforia/Vision
@@ -181,17 +258,12 @@ public class AutonomousOpMode extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart(red);
 
+        // TODO: make vuforia close during stop so drivers can safely restart if necessary
         relicTrackables.deactivate();
         vuforia.close();
 
         resetFlickers();
 
-
-
-        /*vuforia.close();
-        detector = new CryptoboxDetector();
-        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, red ? TeamColor.RED : TeamColor.BLUE);
-        detector.enable();*/
         hw.upperLeft.setPosition(0.19);
         hw.upperRight.setPosition(0.77);
 
@@ -259,7 +331,7 @@ public class AutonomousOpMode extends LinearOpMode {
                             AutoMove(0.25, 0, 1904);
                             break;
                     }
-                    drivetrain.EncoderTurn(0.15, 800, true);
+                    GyroTurn(0.15, -90);
                 } else {
                     switch (vumark) {
                         case LEFT:
@@ -272,7 +344,7 @@ public class AutonomousOpMode extends LinearOpMode {
                             AutoMove(0.25, 0, 1889);
                             break;
                     }
-                    drivetrain.EncoderTurn(0.15, 800, false);
+                    GyroTurn(0.15, 90);
                 }
             } else {
                 AutoMove(0.25, 0, 1050);
@@ -324,15 +396,15 @@ public class AutonomousOpMode extends LinearOpMode {
 
             if (close) {
                 if (red) {
-                    drivetrain.EncoderTurn(0.4, 1600, true);
+                    GyroTurn(0.4, 90);
                 } else {
-                    drivetrain.EncoderTurn(0.4, 1600, true);
+                    GyroTurn(0.4, -90);
                 }
             } else {
                 if (red) {
-                    drivetrain.EncoderTurn(0.4, 1600, true);
+                    GyroTurn(0.4, 180);
                 } else {
-                    drivetrain.EncoderTurn(0.4, 1600, true);
+                    GyroTurn(0.4, 180);
                 }
             }
             AutoMoveByTime(-0.8, 0, 370, 2000);
@@ -409,79 +481,6 @@ public class AutonomousOpMode extends LinearOpMode {
         hw.rightFlick.setPosition(0.50);
     }
 
-    class Encoders {
-        int backLeft;
-        int backRight;
-        int forwardLeft;
-        int forwardRight;
-
-        public Encoders() {
-
-        }
-
-        public Encoders(RobotHardware robot) {
-            this.backLeft = robot.backLeft.getCurrentPosition();
-            this.backRight = robot.backRight.getCurrentPosition();
-            this.forwardLeft = robot.forwardLeft.getCurrentPosition();
-            this.forwardRight = robot.forwardRight.getCurrentPosition();
-        }
-
-        public void set(FourWheelMecanumDrivetrain dt, RobotHardware hw) {
-            dt.setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-            hw.backLeft.setTargetPosition(backLeft);
-            hw.backRight.setTargetPosition(backRight);
-            hw.forwardLeft.setTargetPosition(forwardLeft);
-            hw.forwardRight.setTargetPosition(forwardRight);
-        }
-
-        public Encoders average(Encoders other) {
-            Encoders e = new Encoders();
-            e.backLeft = (this.backLeft + other.backLeft) / 2;
-            e.backRight = (this.backRight + other.backRight) / 2;
-            e.forwardLeft = (this.forwardLeft + other.forwardLeft) / 2;
-            e.forwardRight = (this.forwardRight + other.forwardRight) / 2;
-            return e;
-        }
-
-        public void applyOffset(Direction direction, double amount) {
-            if (direction == Direction.FORWARD) {
-                return;
-            }
-            if (direction == Direction.LEFT) {
-                forwardLeft -= amount;
-                forwardRight += amount;
-                backLeft += amount;
-                backRight -= amount;
-            }
-            if (direction == Direction.RIGHT) {
-                forwardLeft += amount;
-                forwardRight -= amount;
-                backLeft -= amount;
-                backRight += amount;
-            }
-        }
-
-        public int totalDiff(Encoders a) {
-            return Math.abs(a.backLeft - backLeft) + Math.abs(a.backRight - backRight) + Math.abs(a.forwardLeft - forwardLeft) + Math.abs(a.forwardRight - forwardRight);
-        }
-    }
-
-    private Direction opposite(Direction input) {
-        if (input == Direction.BACKWARD) {
-            return Direction.FORWARD;
-        }
-        if (input == Direction.FORWARD) {
-            return Direction.BACKWARD;
-        }
-        if (input == Direction.LEFT) {
-            return Direction.RIGHT;
-        }
-        if (input == Direction.RIGHT) {
-            return Direction.LEFT;
-        }
-        return null;
-    }
-
     private void moveHorizontal(double speed, double p, double amount, Direction direction) {
         int backLeftStart = hw.backLeft.getCurrentPosition();
         int backRightStart = hw.backRight.getCurrentPosition();
@@ -528,104 +527,6 @@ public class AutonomousOpMode extends LinearOpMode {
         drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
         drivetrain.stop();
     }
-
-    /*private void visionCrypto(double speed, double p, Direction direction, Direction desired) {
-        boolean blue = direction == Direction.RIGHT;
-        int backLeftStart = hw.backLeft.getCurrentPosition();
-        int backRightStart = hw.backRight.getCurrentPosition();
-        int forwardLeftStart = hw.forwardLeft.getCurrentPosition();
-        int forwardRightStart = hw.forwardRight.getCurrentPosition();
-
-        int id1 = 0;
-        int id2 = 0;
-        boolean specialMode = false;
-        if (blue) {
-            switch (desired) {
-                case LEFT:
-                    specialMode = true;
-                    break;
-                case RIGHT:
-                    id1 = 1;
-                    id2 = 2;
-                    break;
-                case FORWARD:
-                    id1 = 0;
-                    id2 = 1;
-                    break;
-            }
-        } else {
-            switch (desired) {
-                case LEFT:
-                    id1 = 1;
-                    id2 = 2;
-                    break;
-                case RIGHT:
-                    specialMode = true;
-                    break;
-                case FORWARD:
-                    id1 = 0;
-                    id2 = 1;
-                    break;
-            }
-        }
-        if (specialMode) {
-            return;
-        } else {
-            while (opModeIsActive()) {
-
-                if (detector.getCenterPoint(id1, id2) != -1) {
-                    telemetry.addData("Detected -- Screen Fraction", detector.getCenterPoint(id1, id2) / detector.frameSize.width);
-                    RobotLog.i(String.valueOf(detector.getCenterPoint(id1, id2) / detector.frameSize.width));
-                    telemetry.update();
-                    // Two desired columns are detected
-                    if (direction == Direction.LEFT) {
-                        if (detector.getCenterPoint(id1, id2) / detector.frameSize.width > 0.40) {
-                            break;
-                        }
-                    } else {
-                        if (detector.getCenterPoint(id1, id2) / detector.frameSize.width < 0.60) {
-                            break;
-                        }
-                    }
-                }
-                int backLeft = hw.backLeft.getCurrentPosition();
-                int backRight = hw.backRight.getCurrentPosition();
-                int forwardLeft = hw.forwardLeft.getCurrentPosition();
-                int forwardRight = hw.forwardRight.getCurrentPosition();
-
-                int backLeftDiff = Math.abs(backLeft - backLeftStart);
-                int backRightDiff = Math.abs(backRight - backRightStart);
-                int forwardLeftDiff = Math.abs(forwardLeft - forwardLeftStart);
-                int forwardRightDiff = Math.abs(forwardRight - forwardRightStart);
-
-                double avg = (backLeftDiff + backRightDiff + forwardLeftDiff + forwardRightDiff) / 4;
-                double backLeftComp = (avg - backLeftDiff) * p;
-                double backRightComp = (avg - backRightDiff) * p;
-                double forwardLeftComp = (avg - forwardLeftDiff) * p;
-                double forwardRightComp = (avg - forwardRightDiff) * p;
-
-                switch (direction) {
-                    case LEFT:
-                        hw.forwardRight.setPower(speed + forwardRightComp);
-                        hw.forwardLeft.setPower(-speed - forwardLeftComp);
-                        hw.backRight.setPower(-speed - backRightComp);
-                        hw.backLeft.setPower(speed + backLeftComp);
-                        break;
-                    case RIGHT:
-                        hw.forwardRight.setPower(-speed - forwardRightComp);
-                        hw.forwardLeft.setPower(speed + forwardLeftComp);
-                        hw.backRight.setPower(speed + backRightComp);
-                        hw.backLeft.setPower(-speed - backLeftComp);
-                        break;
-
-                }
-            }
-
-            drivetrain.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            drivetrain.stop();
-        }
-    }*/
-
 
     private void release() {
         hw.altClawLeft.setPosition(0.29);

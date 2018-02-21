@@ -47,6 +47,8 @@ public class RobotHardware {
     public Servo jewelArm1;
     public Servo jewelArm2;
 
+    public Servo relicClaw;
+
     public Servo upperLeft;
     public Servo upperRight;
     public Servo altClawLeft;

@@ -68,7 +68,6 @@ public class JewelDetector extends OpenCVPipeline {
 
     private Size newSize = new Size();
 
-    @Override
     public Mat processFrame(Mat rgba, Mat gray) {
 
         Size initSize= rgba.size();

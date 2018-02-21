@@ -284,7 +284,7 @@ public class TestingTeleOp extends LinearOpMode {
                         }
                         break;
                     case 2: // Grabbing two glyphs
-                        robot.altClawLeft.setPosition(0.48);
+                        robot.altClawLeft.setPosition(0.468);
                         robot.altClawRight.setPosition(0.47);
                         break;
                     case 3: // Grabbing one glyphs
@@ -293,8 +293,8 @@ public class TestingTeleOp extends LinearOpMode {
                         break;
                     case 4: // slight open
                         // release altClawTurned and upperClaw (in vertical glyph positions
-                        robot.altClawLeft.setPosition(0.57); //0.550
-                        robot.altClawRight.setPosition(0.39); //0.336
+                        robot.altClawLeft.setPosition(0.556); //0.550
+                        robot.altClawRight.setPosition(0.36); //0.336
                         break;
                 }
 

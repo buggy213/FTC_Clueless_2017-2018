@@ -223,7 +223,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
 
     // Turns robot
     public void Rotate(boolean clockwise, double speed) {
-        if (clockwise) {
+        if (!clockwise) {
             setPower(rw.forwardRight, speed);
             setPower(rw.forwardLeft, -speed);
             setPower(rw.backRight, speed);

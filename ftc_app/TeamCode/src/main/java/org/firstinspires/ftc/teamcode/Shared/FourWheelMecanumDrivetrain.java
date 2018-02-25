@@ -2,17 +2,9 @@ package org.firstinspires.ftc.teamcode.Shared;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.configuration.MotorConfiguration;
-import com.qualcomm.robotcore.robot.Robot;
 
-import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
-import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
@@ -32,7 +24,7 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
     // Constants used to adjust various parameters / characteristics of the drivetrain
     final double rotSpeed = 0.75;
     final double speedThreshold = 0.05;
-    final double turnThreshold = 2;
+    public double turnThreshold = 2;
 
     // region auto
     // Primary movement method for auto
@@ -45,23 +37,6 @@ public class FourWheelMecanumDrivetrain implements MecanumDrivetrain {
         MoveAngle(speed, angle, 0);
         Thread.sleep((long)(time * 1000));
         stop();
-    }
-
-    public void AutoMove(double speed, double angle, int counts) {
-        int initialForward = rw.forwardLeft.getCurrentPosition();
-        int initialBackward = rw.backLeft.getCurrentPosition();
-
-        MoveAngle(speed, angle, 0);
-
-        while (runningOpMode.opModeIsActive()) {
-            int differenceForward = Math.abs(rw.forwardLeft.getCurrentPosition() - initialForward);
-            int differenceBackward = Math.abs(rw.backLeft.getCurrentPosition() - initialBackward);
-
-            if ((differenceBackward + differenceForward) / 2 > counts) {
-                stop();
-                break;
-            }
-        }
     }
 
     public void AutoMove(Direction direction, double speed, double time) throws InterruptedException{

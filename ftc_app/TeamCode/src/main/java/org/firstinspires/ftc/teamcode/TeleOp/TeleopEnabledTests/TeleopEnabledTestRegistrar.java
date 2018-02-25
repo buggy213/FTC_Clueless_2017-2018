@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeleOp.TeleopEnabledTests;
 
 
-import com.qualcomm.robotcore.hardware.Servo;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +14,6 @@ public class TeleopEnabledTestRegistrar {
     // Add/remove tests here
     public static void LoadTests() {
         teleopEnabledTestClasses.add(TurnTest.class);
-        teleopEnabledTestClasses.add(ServosAndMotorsTest.class);
-        teleopEnabledTestClasses.add(AutoGrabTest.class);
     }
 
 }

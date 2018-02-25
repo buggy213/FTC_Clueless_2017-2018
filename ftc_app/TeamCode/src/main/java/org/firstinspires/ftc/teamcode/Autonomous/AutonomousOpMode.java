@@ -32,14 +32,12 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 import android.graphics.Bitmap;
 import android.util.Pair;
 
-import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.detectors.JewelDetector;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.RobotLog;
 import com.vuforia.Image;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -52,8 +50,6 @@ import org.firstinspires.ftc.teamcode.Shared.ClosableVuforiaLocalizer;
 import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
-import org.firstinspires.ftc.teamcode.Test.CryptoboxDetector;
-import org.firstinspires.ftc.teamcode.Test.TeamColor;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -63,8 +59,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-
-import static java.util.Collections.max;
 
 
 /**
@@ -111,7 +105,7 @@ public class AutonomousOpMode extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         hw = RobotHardware.GetSingleton(hardwareMap);
         RobotHardware.SetCurrentRunningOpMode(this);
-        String mode = "";
+        String mode = " ";
         MatchParameters parameters = MatchParameters.current;
         if (parameters == null) {
             requestOpModeStop();
@@ -147,7 +141,7 @@ public class AutonomousOpMode extends LinearOpMode {
         //Jewel Detector Settings
         jewels.areaWeight = 0.02;
         jewels.detectionMode = JewelDetector.JewelDetectionMode.MAX_AREA; // PERFECT_AREA
-        //jewels.perfectArea = 6500; <- Needed for PERFECT_AREA
+        jewels.perfectArea = 6500; //<- Needed for PERFECT_AREA
         jewels.debugContours = true;
         jewels.maxDiffrence = 15;
         jewels.ratioWeight = 15;
@@ -187,13 +181,13 @@ public class AutonomousOpMode extends LinearOpMode {
         resetFlickers();
 
 
-
-        /*vuforia.close();
+        /*
+        vuforia.close();
         detector = new CryptoboxDetector();
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), 0, red ? TeamColor.RED : TeamColor.BLUE);
-        detector.enable();*/
+        detector.enable();
         hw.upperLeft.setPosition(0.19);
-        hw.upperRight.setPosition(0.77);
+        hw.upperRight.setPosition(0.77);*/
 
         runtime.reset();
 

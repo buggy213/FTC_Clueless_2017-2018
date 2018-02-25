@@ -29,26 +29,12 @@
 
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-import org.firstinspires.ftc.teamcode.Shared.Direction;
 import org.firstinspires.ftc.teamcode.Shared.FourWheelMecanumDrivetrain;
 import org.firstinspires.ftc.teamcode.Shared.RobotHardware;
 
@@ -158,7 +144,7 @@ public class TelemetryOpmode extends LinearOpMode {
                 drivetrain.stop();
             }
 
-            double linearSlidePivotPower = (gamepad2.left_trigger - gamepad2.right_trigger) * 0.4 ;
+            double linearSlidePivotPower = (gamepad2.left_trigger - gamepad2.right_trigger * 0.4);
             robot.linearSlidePivotMotor.setPower(linearSlidePivotPower);
 
             if (gamepad2.dpad_right) {
@@ -268,6 +254,10 @@ public class TelemetryOpmode extends LinearOpMode {
                     robot.upperLeft.setPosition(0.55);
                     robot.upperRight.setPosition(0.39);
                     break;
+                case 3: // fully back
+                    robot.upperLeft.setPosition(0);
+                    robot.upperRight.setPosition(1);
+                    break;
             }
 
             if (gamepad1.left_bumper) {
@@ -284,11 +274,17 @@ public class TelemetryOpmode extends LinearOpMode {
                 robot.jewelArm2.setPosition(0.90);
             }
 
-            if (gamepad1.back) {
-                robot.relicClaw.setPosition(0.5);
+            if (gamepad1.a) {
+                telemetry.addData("RELIC", "Relic Claw Open");
+                altClawPosition = 0;
+                upperClawPosition = 3;
+
+
+                robot.relicClaw.setPosition(0.4);
             }
-            if (gamepad1.guide) {
-                robot.relicClaw.setPosition(0.5);
+            if (gamepad1.b) {
+                telemetry.addData("RELIC", "Relic Claw Closed");
+                robot.relicClaw.setPosition(0.6);
             }
 
             double linearSlideDrivePower = gamepad2.left_stick_y + gamepad2.right_stick_y;
@@ -311,7 +307,7 @@ public class TelemetryOpmode extends LinearOpMode {
             // telemetry.addData("FR", robot.forwardRight.getCurrentPosition());
             // telemetry.addData("BL", robot.backLeft.getCurrentPosition());
             // telemetry.addData("BR", robot.backRight.getCurrentPosition());
-            // telemetry.update();
+            telemetry.update();
         }
     }
 

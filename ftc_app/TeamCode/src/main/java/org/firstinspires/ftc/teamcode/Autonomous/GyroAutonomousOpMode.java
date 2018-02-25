@@ -68,7 +68,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import static java.lang.Math.sin;
-import static java.util.Collections.max;
 
 
 /**
@@ -84,7 +83,7 @@ import static java.util.Collections.max;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name = "Gyro Autonomous", group = "Linear Opmode")
+@Autonomous(name = "GyroAutonomous", group = "Linear Opmode")
 public class GyroAutonomousOpMode extends LinearOpMode {
 
     // Declare OpMode members.
@@ -127,80 +126,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
     }
-    public void TwoSpeedGyroTurn(double firstSpeed, double secondSpeed, double thresholdAngle, double finalAngle) {
-        // Angle is counterclockwise (sorry)
 
-        double normalizedHeading = normalize(getHeading());
-        double normalizedThresholdAngle = normalize(thresholdAngle);
-        double normalizedFinalAngle = normalize(finalAngle);
-        double angleDiff = normalizedHeading - normalizedFinalAngle;
-
-        angleDiff = (angleDiff / 180) * Math.PI;
-        double c = sin(angleDiff);
-        if (c >= 0) {
-            // CW
-            drivetrain.MoveAngle(0, 0, firstSpeed);
-
-        }
-        else if (c < 0) {
-            // CCW
-            drivetrain.MoveAngle(0, 0, -firstSpeed);
-        }
-
-        while (opModeIsActive()) {
-            double angle1 = normalize(normalizedThresholdAngle + turnThreshold);
-            double angle2 = normalize(normalizedThresholdAngle - turnThreshold);
-            double target = normalize(getHeading());
-            double diff = normalize(angle2 - angle1);
-            if (diff > 180) {
-                double temp = angle1;
-                angle1 = angle2;
-                angle2 = temp;
-            }
-            boolean withinFirst = false;
-            if (angle1 <= angle2) {
-                withinFirst = target >= angle1 && target <= angle2;
-            }
-
-            else {
-                withinFirst = target >= angle1 || target <= angle2;
-            }
-
-            if (withinFirst) {
-                if (c >= 0) {
-                    // CW
-                    drivetrain.MoveAngle(0, 0, secondSpeed);
-
-                }
-                else if (c < 0) {
-                    // CCW
-                    drivetrain.MoveAngle(0, 0, -secondSpeed);
-                }
-            }
-
-            double angle3 = normalize(normalizedFinalAngle + turnThreshold);
-            double angle4 = normalize(normalizedFinalAngle - turnThreshold);
-            double diff1 = normalize(angle4 - angle3);
-            if (diff1 > 180) {
-                double temp = angle1;
-                angle3 = angle4;
-                angle4 = temp;
-            }
-            boolean withinSecond = false;
-            if (angle1 <= angle2) {
-                withinSecond = target >= angle1 && target <= angle2;
-            }
-
-            else {
-                withinSecond = target >= angle1 || target <= angle2;
-            }
-
-            if (withinSecond) {
-                drivetrain.stop();
-                break;
-            }
-        }
-    }
     public void GyroTurn(double speed, double angle) {
         // Angle is counterclockwise (sorry)
 
@@ -391,29 +317,29 @@ public class GyroAutonomousOpMode extends LinearOpMode {
                 if (red) {
                     switch (vumark) {
                         case RIGHT:
-                            AutoMove(0.325, 0, 1240);
+                            AutoMove(0.275, 0, 1240);
                             break;
                         case FORWARD:
-                            AutoMove(0.325, 0, 1572);
+                            AutoMove(0.275, 0, 1572);
                             break;
                         case LEFT:
-                            AutoMove(0.325, 0, 1904);
+                            AutoMove(0.275, 0, 1904);
                             break;
                     }
-                    GyroTurn(0.15, -90);
+                    GyroTurn(0.2, -90);
                 } else {
                     switch (vumark) {
                         case LEFT:
-                            AutoMove(0.325, 0, 1203);
+                            AutoMove(0.275, 0, 1203);
                             break;
                         case FORWARD:
-                            AutoMove(0.325, 0, 1547);
+                            AutoMove(0.275, 0, 1547);
                             break;
                         case RIGHT:
-                            AutoMove(0.325, 0, 1889);
+                            AutoMove(0.275, 0, 1889);
                             break;
                     }
-                    GyroTurn(0.25, 90);
+                    GyroTurn(0.2, 90);
                 }
             } else {
                 AutoMove(0.25, 0, 1050);
@@ -447,7 +373,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
                 }
             }
 
-            AutoMove(0.25, 0, 325);
+            AutoMove(0.25, 0, 425);
             AutoMove(-0.25, 0, 25);
 
             robot.linearSlideDriveMotor.setPower(0.75);
@@ -457,51 +383,65 @@ public class GyroAutonomousOpMode extends LinearOpMode {
             release();
             AutoMove(-0.5, 0, 200);
             if (vumark != Direction.FORWARD) {
-                AutoMove(0.2, vumark == Direction.RIGHT ? -90 : 90, 175);
+                if (vumark == Direction.RIGHT) {
+                    AutoMove(0.4, -90, 175);
+                }
+                if (vumark == Direction.LEFT) {
+                    AutoMove(0.4, 90, 175);
+                }
             }
 
+            robot.altClawLeft.setPosition(0.75);
+            robot.altClawRight.setPosition(0.25);
 
             if (close) {
                 if (red) {
-                    GyroTurn(0.2, 90);
+                    GyroTurn(0.3, 90);
                 } else {
-                    GyroTurn(0.2, -90);
+                    GyroTurn(0.3, -90);
                 }
             } else {
                 GyroTurn(0.4,180);
             }
-            AutoMoveByTime(-0.8, 0, 370, 2000);
-            AutoMove(0.8, 0, 100);
+           // AutoMoveByTime(-0.8, 0, 370, 2000);
+           // AutoMove(0.8, 0, 100);
 
             // Only attempt multi-glyph auto if in close position (for now)
             if (close) {
-                robot.altClawLeft.setPosition(0.29);
-                robot.altClawRight.setPosition(0.65);
-                robot.upperLeft.setPosition(0.19);
-                robot.upperRight.setPosition(0.77);
-                drivetrain.AutoMove(0.8, 0, 1000);
+                robot.altClawLeft.setPosition(0.48);
+                robot.altClawRight.setPosition(0.47);
+
+                AutoMove(1, 0, 1000);
                 robot.altClawLeft.setPosition(0.67);  //0.610
                 robot.altClawRight.setPosition(0.30);  //0.276
                 robot.upperLeft.setPosition(0.61);  //0.6
                 robot.upperRight.setPosition(0.33);  //0.36
-                Thread.sleep(1000);
-                drivetrain.AutoMove(-0.4, 0, 800);
+                sleep(200);
+                robot.linearSlideDriveMotor.setPower(-1);
+                sleep(1000);
+                robot.linearSlideDriveMotor.setPower(0);
+
+                AutoMove(-1, 0, 650);
+                drivetrain.turnThreshold = 4;
                 if (red) {
-                    GyroTurn(0.3, -90);
+                    GyroTurn(0.55, 0);
+                    GyroTurn(0.25, -90);
                 }
                 else {
-                    GyroTurn(0.3, 90);
+                    GyroTurn(0.55, 0);
+                    GyroTurn(0.25, 90);
                 }
+
+                AutoMove(1, 0, 600);
+                release();
+                robot.upperLeft.setPosition(0.19);
+                robot.upperRight.setPosition(0.77);
+                sleep(600);
+                AutoMove(-1, 0, 175);
 
             }
 
 
-            robot.altClawLeft.setPosition(0.88);
-            robot.altClawRight.setPosition(0.12);
-
-            release();
-            robot.upperLeft.setPosition(0.05);
-            robot.upperRight.setPosition(0.90);
 
             requestOpModeStop();
         }
@@ -645,6 +585,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
             try {
                 VuforiaLocalizer.CloseableFrame frame = vuforia.getFrameQueue().take();
                 long numImages = frame.getNumImages();
+
                 for (int i = 0; i < numImages; i++) {
                     if (frame.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
                         rgb = frame.getImage(i);
@@ -675,9 +616,7 @@ public class GyroAutonomousOpMode extends LinearOpMode {
                     }
                     Results results = analyzeBuffer();
                     telemetry.addData("Vision", results.toString());
-                    telemetry.addData("Current Order / VuMark", order.toString() + vm.toString());
                     telemetry.update();
-
                     lastKnownVumark = vm;
                     this.order = order;
                     frame.close();
